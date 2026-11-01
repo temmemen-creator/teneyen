@@ -1,0 +1,1715 @@
+<title>Subscription Sweep</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Find every subscription you pay for and cancel the ones you don't want.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a bank statement you can act on. Ruled ledger rows, one highlighted yearly total, a red pen for cancelling. */
+:root {
+  --paper: #EEF1F5;
+  --sheet: #FFFFFF;
+  --ink: #0F1A2E;
+  --muted: #586378;
+  --rule: #D9DFE8;
+  --accent: #1D4ED8;
+  --accent-ink: #FFFFFF;
+  --accent-soft: rgba(29, 78, 216, .09);
+  --mark: rgba(255, 219, 40, .78);
+  --cut: #C42F25;
+  --cut-soft: rgba(196, 47, 37, .08);
+  --ok: #14774B;
+  --ok-soft: rgba(20, 119, 75, .1);
+  --warn: #9A5B00;
+  --warn-soft: rgba(214, 140, 0, .14);
+  --tile-s: 58%;
+  --tile-l: 42%;
+  --tile-fg: #FFFFFF;
+  --scrim: rgba(12, 20, 36, .48);
+  --shadow: 0 1px 2px rgba(15, 26, 46, .06), 0 10px 30px rgba(15, 26, 46, .07);
+
+  --display: "Archivo", "Arial Narrow", "Helvetica Neue", system-ui, sans-serif;
+  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --r: 14px;
+  --nav-h: 64px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0C111C;
+    --sheet: #151C2B;
+    --ink: #E7EBF3;
+    --muted: #98A2B6;
+    --rule: #263046;
+    --accent: #86A6FF;
+    --accent-ink: #0C111C;
+    --accent-soft: rgba(134, 166, 255, .13);
+    --mark: rgba(255, 214, 10, .32);
+    --cut: #FF7A6E;
+    --cut-soft: rgba(255, 122, 110, .12);
+    --ok: #4CCB8E;
+    --ok-soft: rgba(76, 203, 142, .13);
+    --warn: #F2B544;
+    --warn-soft: rgba(242, 181, 68, .14);
+    --tile-s: 45%;
+    --tile-l: 58%;
+    --tile-fg: #0C111C;
+    --scrim: rgba(0, 0, 0, .6);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0C111C;
+  --sheet: #151C2B;
+  --ink: #E7EBF3;
+  --muted: #98A2B6;
+  --rule: #263046;
+  --accent: #86A6FF;
+  --accent-ink: #0C111C;
+  --accent-soft: rgba(134, 166, 255, .13);
+  --mark: rgba(255, 214, 10, .32);
+  --cut: #FF7A6E;
+  --cut-soft: rgba(255, 122, 110, .12);
+  --ok: #4CCB8E;
+  --ok-soft: rgba(76, 203, 142, .13);
+  --warn: #F2B544;
+  --warn-soft: rgba(242, 181, 68, .14);
+  --tile-s: 45%;
+  --tile-l: 58%;
+  --tile-fg: #0C111C;
+  --scrim: rgba(0, 0, 0, .6);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 24px);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--paper);
+}
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Top bar */
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 9;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+.topbar .wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 12px;
+}
+.brand { display: flex; align-items: center; gap: 9px; min-width: 0; margin-right: auto; }
+.brand svg { flex: none; }
+.brand-name {
+  font-family: var(--display);
+  font-stretch: 118%;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+.sync {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.sync::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.sync[data-state="db"]::before { background: var(--ok); }
+.sync[data-state="syncing"]::before { background: var(--warn); }
+.sync[data-state="offline"]::before { background: var(--cut); }
+.btn-add {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 0; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink);
+  font-weight: 700; font-size: 14px;
+  padding: 8px 14px 8px 11px;
+  cursor: pointer;
+}
+
+main { display: block; }
+.view { display: grid; gap: 18px; padding-block: 18px; }
+
+/* Statement summary */
+.hero {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  padding: 18px 18px 16px;
+  display: grid;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: 0; height: 6px;
+  background: repeating-linear-gradient(90deg, var(--rule) 0 8px, transparent 8px 14px);
+}
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero-top { display: flex; align-items: center; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; }
+.hero-amount { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.hero-amount .big {
+  font-family: var(--display);
+  font-stretch: 112%;
+  font-weight: 800;
+  font-size: clamp(38px, 11vw, 52px);
+  line-height: 1.02;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.hero-amount .per { color: var(--muted); font-weight: 600; }
+.hero-year { margin: 0; font-size: 16px; }
+.hero-year mark {
+  background: linear-gradient(transparent 18%, var(--mark) 18%, var(--mark) 88%, transparent 88%);
+  color: inherit;
+  padding: 0 3px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.hero-next {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--rule);
+  font-size: 14px;
+  color: var(--muted);
+  padding-bottom: 6px;
+}
+.hero-next strong { color: var(--ink); }
+.saved {
+  font-size: 14px;
+  color: var(--ok);
+  font-weight: 600;
+  padding-bottom: 6px;
+}
+
+/* Banner */
+.banner {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  background: var(--accent-soft);
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-size: 14px;
+}
+.banner p { margin: 0; flex: 1 1 220px; min-width: 0; }
+
+/* Section heads */
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sec-head h2, .panel h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-stretch: 108%;
+  font-weight: 750;
+  font-size: 19px;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+}
+.count { font-family: var(--mono); font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 6px; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; background: var(--sheet); }
+.seg button {
+  border: 0; background: transparent; border-radius: 999px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  padding: 5px 11px; cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+/* Ledger list */
+.ledger {
+  list-style: none; margin: 0; padding: 0;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.ledger > li + li { border-top: 1px solid var(--rule); }
+.row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  padding: 14px;
+  align-items: start;
+}
+.tile {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: hsl(var(--h, 220) var(--tile-s) var(--tile-l));
+  color: var(--tile-fg);
+  font-family: var(--display);
+  font-stretch: 100%;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -.02em;
+}
+.row-main { min-width: 0; display: grid; gap: 2px; }
+.row-name { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
+.row-meta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.row-meta.mono { font-size: 12px; }
+.row-amt { text-align: right; white-space: nowrap; font-weight: 600; font-size: 16px; }
+.row-amt small { display: block; font-size: 11px; color: var(--muted); font-weight: 500; }
+.row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.chips { display: inline-flex; gap: 6px; flex-wrap: wrap; vertical-align: middle; }
+.chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  border-radius: 5px;
+  padding: 1px 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  white-space: nowrap;
+}
+.chip.soon { background: var(--warn-soft); color: var(--warn); }
+.chip.ex { background: var(--rule); color: var(--muted); }
+.chip.done { background: var(--ok-soft); color: var(--ok); }
+
+.btn-cut, .btn-quiet, .btn-primary, .btn-secondary, .btn-ok {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: 999px;
+  font-weight: 700; font-size: 14px;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  line-height: 1.2;
+}
+.btn-cut { border-color: var(--cut); color: var(--cut); background: var(--cut-soft); }
+.btn-quiet { border-color: var(--rule); color: var(--ink); background: transparent; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-secondary { border-color: var(--accent); color: var(--accent); background: transparent; }
+.btn-ok { background: var(--ok); color: var(--sheet); }
+.btn-block { width: 100%; padding: 12px 16px; font-size: 15px; }
+button:disabled { opacity: .5; cursor: default; }
+
+.empty {
+  background: var(--sheet);
+  border: 1px dashed var(--rule);
+  border-radius: var(--r);
+  padding: 22px 18px;
+  display: grid; gap: 10px;
+}
+.empty h3 { margin: 0; font-family: var(--display); font-stretch: 108%; font-weight: 750; font-size: 18px; }
+.empty p { margin: 0; color: var(--muted); }
+
+details.cancelled > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 4px 0;
+}
+details.cancelled > summary::-webkit-details-marker { display: none; }
+details.cancelled > summary h2 { margin: 0; font-family: var(--display); font-stretch: 108%; font-weight: 750; font-size: 19px; }
+details.cancelled > summary .arrow { transition: transform .2s; color: var(--muted); }
+details.cancelled[open] > summary .arrow { transform: rotate(180deg); }
+details.cancelled .ledger { margin-top: 10px; }
+.row.is-cancelled .row-name { text-decoration: line-through; text-decoration-color: var(--cut); text-decoration-thickness: 2px; }
+.row.is-cancelled .row-amt { color: var(--muted); }
+
+/* Panels on the Find view */
+.panel {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  border-radius: var(--r);
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+.panel p { margin: 0; }
+.panel .lede { color: var(--muted); }
+.store-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.store {
+  display: grid; gap: 2px;
+  text-decoration: none;
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: var(--ink);
+  background: var(--paper);
+}
+.store-k { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.store-v { font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.links-row { display: flex; gap: 8px 16px; flex-wrap: wrap; font-size: 14px; font-weight: 600; }
+.fine { font-size: 13px; color: var(--muted); }
+
+.field { display: grid; gap: 6px; }
+.field > label, .lbl { font-weight: 600; font-size: 14px; }
+.field .help { font-size: 12.5px; color: var(--muted); }
+input[type="text"], input[type="number"], input[type="date"], input[type="search"], input[type="url"], select, textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1.5px solid var(--rule);
+  border-radius: 10px;
+  background: var(--paper);
+  padding: 10px 12px;
+  font-size: 16px;
+}
+textarea { font-family: var(--mono); font-size: 13.5px; line-height: 1.45; resize: vertical; white-space: pre; overflow-x: auto; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-2 > * { min-width: 0; }
+@media (max-width: 360px) { .grid-2 { grid-template-columns: 1fr; } }
+
+.file-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1.5px dashed var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 12px;
+  padding: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.filelist { display: flex; flex-wrap: wrap; gap: 6px; }
+.filelist .chip { text-transform: none; letter-spacing: 0; font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-row > * { flex: 1 1 160px; }
+.textlink { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
+.status { font-size: 14px; color: var(--muted); min-height: 0; }
+.status:empty { display: none; }
+.status.err { color: var(--cut); }
+
+.cand { display: grid; grid-template-columns: 24px 40px minmax(0, 1fr) auto; gap: 4px 10px; padding: 12px 14px; align-items: start; cursor: pointer; }
+.cand input[type="checkbox"] { width: 20px; height: 20px; margin: 10px 0 0; accent-color: var(--accent); }
+.cand.is-dupe { opacity: .55; cursor: default; }
+.results { display: grid; gap: 12px; }
+.results h3 { margin: 0; font-family: var(--display); font-stretch: 108%; font-weight: 750; font-size: 17px; }
+
+.dir .row { grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; padding: 10px 14px; }
+
+/* Bottom tab bar */
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 9;
+  background: var(--sheet);
+  border-top: 1px solid var(--rule);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.tabbar .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: var(--nav-h); align-items: center; }
+.tab {
+  border: 0; background: transparent; cursor: pointer;
+  display: grid; justify-items: center; gap: 2px;
+  color: var(--muted);
+  font-size: 12px; font-weight: 600;
+  padding: 6px 0;
+  border-radius: 10px;
+}
+.tab svg { width: 22px; height: 22px; }
+.tab[aria-selected="true"] { color: var(--accent); }
+.tab .badge { font-family: var(--mono); font-size: 10px; }
+
+/* Bottom sheet */
+dialog.sheet {
+  border: 0;
+  padding: 0;
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  max-height: 92dvh;
+  border-radius: 20px 20px 0 0;
+  background: var(--sheet);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+dialog.sheet::backdrop { background: var(--scrim); }
+@media (min-width: 640px) {
+  dialog.sheet { margin: auto; border-radius: 20px; }
+}
+.sheet-inner {
+  display: grid; gap: 14px;
+  padding: 10px max(18px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+}
+.grabber { width: 40px; height: 4px; border-radius: 4px; background: var(--rule); justify-self: center; }
+.sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sheet-head h2 { margin: 0; font-family: var(--display); font-stretch: 110%; font-weight: 800; font-size: 22px; letter-spacing: -.01em; text-wrap: balance; }
+.x { border: 0; background: var(--paper); border-radius: 999px; width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; flex: none; }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; counter-increment: s; }
+.steps li::before {
+  content: counter(s);
+  width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--ink);
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+}
+.steps li > div { display: grid; gap: 8px; min-width: 0; }
+.note { font-size: 14px; background: var(--warn-soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; }
+.err-text { color: var(--cut); font-size: 13.5px; }
+.err-text:empty { display: none; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
+  transform: translateX(-50%) translateY(10px);
+  opacity: 0;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: opacity .2s, transform .2s;
+  z-index: 20;
+  max-width: calc(100% - 32px);
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+        <rect x="3" y="2" width="20" height="22" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="7.5" y1="8" x2="18.5" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="7.5" y1="13" x2="18.5" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
+        <line x1="7.5" y1="18" x2="15" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
+        <line x1="5" y1="15.5" x2="21" y2="10.5" stroke="var(--cut)" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <span class="brand-name">Subscription Sweep</span>
+    </div>
+    <button class="btn-add" id="btn-add" type="button" aria-label="Add a subscription">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      Add
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- My list -->
+  <section class="wrap view" id="view-mine" aria-label="My subscriptions">
+    <div class="hero" aria-live="polite">
+      <div class="hero-top"><span class="eyebrow" id="h-eyebrow">Statement</span><span class="sync" id="sync" data-state="local">On this phone</span></div>
+      <div class="hero-amount"><span class="big" id="h-month">$0.00</span><span class="per">a month</span></div>
+      <p class="hero-year">That's <mark id="h-year">$0.00 a year</mark> on <span id="h-count">0 subscriptions</span>.</p>
+      <div class="hero-next" id="h-next">Add your subscriptions to see what's due next.</div>
+      <div class="saved" id="h-saved" hidden></div>
+    </div>
+
+    <div class="banner" id="ex-banner" hidden>
+      <p id="ex-text">These are example subscriptions so you can see how it works.</p>
+      <button class="btn-quiet" type="button" data-act="clear-examples">Remove examples</button>
+    </div>
+
+    <div id="active-wrap">
+      <div class="sec-head" style="margin-bottom:10px">
+        <h2>Active<span class="count" id="active-count"></span></h2>
+        <div class="seg" role="group" aria-label="Sort by">
+          <button type="button" data-sort="next" aria-pressed="true">Next charge</button>
+          <button type="button" data-sort="price" aria-pressed="false">Cost</button>
+        </div>
+      </div>
+      <ul class="ledger" id="active-list"></ul>
+    </div>
+
+    <div class="empty" id="empty" hidden>
+      <h3>Your list is empty</h3>
+      <p>Start with Find. It checks your phone's app store, scans a bank statement, or lets you tick off popular services you pay for.</p>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" data-act="go-find">Find my subscriptions</button>
+        <button class="btn-quiet" type="button" data-act="add">Add one by hand</button>
+      </div>
+    </div>
+
+    <details class="cancelled" id="cancelled-wrap" hidden>
+      <summary>
+        <h2>Cancelled<span class="count" id="cancelled-count"></span></h2>
+        <svg class="arrow" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 7l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </summary>
+      <ul class="ledger" id="cancelled-list"></ul>
+    </details>
+
+    <section class="panel" aria-labelledby="set-h">
+      <h2 id="set-h">Settings</h2>
+      <div class="field">
+        <label for="set-cur">Currency</label>
+        <select id="set-cur"></select>
+      </div>
+      <p class="fine" id="store-note">Your list is saved on this phone.</p>
+    </section>
+  </section>
+
+  <!-- Find -->
+  <section class="wrap view" id="view-find" aria-label="Find subscriptions" hidden>
+    <section class="panel" aria-labelledby="f1">
+      <h2 id="f1">Billed through your phone</h2>
+      <p class="lede">Your phone's app store keeps one list of every subscription you pay for through it, and you can cancel any of them from there. Check this first.</p>
+      <div class="store-grid">
+        <a class="store" href="https://apps.apple.com/account/subscriptions" target="_blank" rel="noopener">
+          <span class="store-k">iPhone &amp; iPad</span>
+          <span class="store-v">App Store subscriptions <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2h7v7M12 2L3 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        </a>
+        <a class="store" href="https://play.google.com/store/account/subscriptions" target="_blank" rel="noopener">
+          <span class="store-k">Android</span>
+          <span class="store-v">Google Play subscriptions <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2h7v7M12 2L3 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        </a>
+      </div>
+      <div class="links-row">
+        <a href="https://www.paypal.com/myaccount/autopay/" target="_blank" rel="noopener">PayPal automatic payments ↗</a>
+        <a href="https://www.amazon.com/yourmembershipsandsubscriptions" target="_blank" rel="noopener">Amazon memberships ↗</a>
+      </div>
+      <p class="fine">On iPhone you can also open Settings, tap your name, then Subscriptions. Add anything you find with the Add button so it counts toward your total.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="f2">
+      <h2 id="f2">Scan a bank statement</h2>
+      <p class="lede">Download a statement from your bank's app or website, or take screenshots of your recent transactions. The scan picks out known services and charges that repeat.</p>
+      <label class="file-btn" for="st-file">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 12V3M5 7l4-4 4 4M3 13v2h12v-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Choose a statement or screenshots
+      </label>
+      <input class="visually-hidden" type="file" id="st-file" multiple accept=".csv,.tsv,.txt,.pdf,.ofx,.qfx,text/csv,text/plain,application/pdf,image/*">
+      <p class="fine">CSV, PDF, OFX/QFX, text, or photos and screenshots.</p>
+      <div class="filelist" id="st-files"></div>
+      <div class="field">
+        <label for="st-text">Or paste transactions</label>
+        <textarea id="st-text" rows="5" wrap="off" placeholder="10/05  NETFLIX.COM          -17.99&#10;10/07  SPOTIFY USA          -11.99&#10;10/12  APPLE.COM/BILL        -2.99"></textarea>
+      </div>
+      <button class="textlink" type="button" data-act="sample">Fill in a sample statement to try it</button>
+      <div class="btn-row">
+        <button class="btn-primary" type="button" id="st-scan">Scan on this phone</button>
+        <button class="btn-secondary" type="button" id="st-claude" hidden>Ask Claude to read it</button>
+      </div>
+      <p class="fine" id="st-privacy">Scanning on this phone keeps your statement on your device.</p>
+      <div class="status" id="st-status" role="status"></div>
+      <div id="st-results"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="f3">
+      <h2 id="f3">Popular services</h2>
+      <p class="lede">Tap Add next to anything you pay for. Prices are typical US prices; change them to what you pay.</p>
+      <input type="search" id="dir-search" placeholder="Search services" autocomplete="off">
+      <ul class="ledger dir" id="dir-list"></ul>
+      <button class="btn-quiet" type="button" id="dir-more" data-act="dir-more">Show all</button>
+    </section>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Sections">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" type="button" id="tab-mine" data-tab="mine" aria-selected="true" aria-controls="view-mine">
+      <svg viewBox="0 0 22 22" aria-hidden="true"><rect x="3" y="3" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 8h8M7 11h8M7 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>My list <span class="badge" id="tab-count"></span></span>
+    </button>
+    <button class="tab" role="tab" type="button" id="tab-find" data-tab="find" aria-selected="false" aria-controls="view-find">
+      <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="9.5" cy="9.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13.5 13.5L18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Find subscriptions</span>
+    </button>
+  </div>
+</nav>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-title"><div class="sheet-inner" id="sheet-body"></div></dialog>
+<datalist id="dir-names"></datalist>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- small helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const compact = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9+]/g, '');
+const pad = n => String(n).padStart(2, '0');
+const toISO = d => d ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` : '';
+const fromISO = s => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const DAY = 86400000;
+const newId = () => 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const hueOf = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 360; };
+const initials = s => { const w = String(s).replace(/[^A-Za-z0-9+ ]/g, ' ').trim().split(/\s+/); return ((w[0] || '?')[0] + (w[1] ? w[1][0] : (w[0] || '')[1] || '')).toUpperCase(); };
+
+const LS_KEY = 'sweep.v1';
+const UI_KEY = 'sweep.ui';
+const lsGet = k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const lsDel = k => { try { localStorage.removeItem(k); } catch {} };
+
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const CYCLES = {
+  weekly:    { word: 'week',     short: '/wk',  perMonth: 52 / 12, adj: 'Weekly' },
+  monthly:   { word: 'month',    short: '/mo',  perMonth: 1,       adj: 'Monthly' },
+  quarterly: { word: '3 months', short: '/3mo', perMonth: 1 / 3,   adj: 'Every 3 months' },
+  yearly:    { word: 'year',     short: '/yr',  perMonth: 1 / 12,  adj: 'Yearly' },
+};
+
+const BILLERS = {
+  direct: { name: 'The company itself', label: 'the company' },
+  apple:  { name: 'Apple (App Store)', label: 'Apple', short: 'Apple', url: 'https://apps.apple.com/account/subscriptions', how: 'Tap it in the list, then tap Cancel Subscription.' },
+  google: { name: 'Google Play', label: 'Google Play', short: 'Google Play', url: 'https://play.google.com/store/account/subscriptions', how: 'Tap it in the list, then tap Cancel subscription.' },
+  amazon: { name: 'Amazon', label: 'Amazon', short: 'Amazon', url: 'https://www.amazon.com/yourmembershipsandsubscriptions', how: 'Find it under Memberships & Subscriptions, then choose Cancel subscription.' },
+  paypal: { name: 'PayPal', label: 'PayPal', short: 'PayPal', url: 'https://www.paypal.com/myaccount/autopay/', how: 'Pick the merchant under Automatic payments, then tap Cancel.' },
+  other:  { name: 'Something else', label: 'another company' },
+};
+
+/* ---------- service directory ---------- */
+const D = (id, name, cat, price, cycle, url, how, match, via) => ({ id, name, cat, price, cycle, url, how, match: (match || []).map(compact), via: via || 'direct' });
+const APPLE = BILLERS.apple.url, GPLAY = BILLERS.google.url;
+const DIRECTORY = [
+  D('netflix', 'Netflix', 'Streaming', 17.99, 'monthly', 'https://www.netflix.com/account', 'Open Account and tap Cancel Membership.', ['netflix']),
+  D('youtube-tv', 'YouTube TV', 'Live TV', 82.99, 'monthly', 'https://tv.youtube.com/', 'Tap your profile photo, then Settings, Membership, and Cancel membership.', ['youtubetv']),
+  D('youtube-premium', 'YouTube Premium', 'Streaming', 13.99, 'monthly', 'https://www.youtube.com/paid_memberships', 'Tap Manage membership, then Deactivate.', ['youtubepremium', 'youtubemusic', 'youtube']),
+  D('disney', 'Disney+', 'Streaming', 11.99, 'monthly', 'https://www.disneyplus.com/account', 'Open Account, choose your subscription, then Cancel Subscription.', ['disneyplus', 'disney+']),
+  D('hulu', 'Hulu', 'Streaming', 11.99, 'monthly', 'https://secure.hulu.com/account', 'Under Your Subscription, select Cancel.', ['hulu']),
+  D('hbomax', 'HBO Max', 'Streaming', 10.99, 'monthly', 'https://www.hbomax.com/', 'Sign in, open your profile, then Subscription, and Cancel Your Subscription.', ['hbomax', 'hbo']),
+  D('paramount', 'Paramount+', 'Streaming', 8.99, 'monthly', 'https://www.paramountplus.com/account/', 'Open Account and select Cancel Subscription.', ['paramount']),
+  D('peacock', 'Peacock', 'Streaming', 10.99, 'monthly', 'https://www.peacocktv.com/account', 'Open Account, then Plans & Payment, and Cancel Plan.', ['peacock']),
+  D('starz', 'Starz', 'Streaming', 10.99, 'monthly', 'https://www.starz.com/', 'Open Settings, then Account, and Cancel Subscription.', ['starz']),
+  D('crunchyroll', 'Crunchyroll', 'Streaming', 7.99, 'monthly', 'https://www.crunchyroll.com/account/membership', 'Select Cancel Membership.', ['crunchyroll']),
+  D('espn', 'ESPN', 'Streaming', 11.99, 'monthly', 'https://www.espn.com/', 'Open your account settings, then Subscriptions, and Cancel.', ['espn']),
+  D('sling', 'Sling TV', 'Live TV', 45.99, 'monthly', 'https://www.sling.com/', 'Sign in, open Account, then Cancel Subscription.', ['slingtv', 'slingcom']),
+  D('kindle', 'Kindle Unlimited', 'Books', 11.99, 'monthly', 'https://www.amazon.com/kindle-dbs/ku/ku-central', 'Select Cancel Kindle Unlimited Membership.', ['kindleunlimited', 'kindleunltd', 'kindlesvcs']),
+  D('audible', 'Audible', 'Books', 14.95, 'monthly', 'https://www.audible.com/account/overview', 'Open Account Details and choose Cancel membership.', ['audible']),
+  D('amazon-music', 'Amazon Music Unlimited', 'Music', 10.99, 'monthly', 'https://www.amazon.com/music/settings', 'Under Subscription Renewal, choose Cancel subscription.', ['amazonmusic', 'amznmusic']),
+  D('prime', 'Amazon Prime', 'Shopping', 14.99, 'monthly', 'https://www.amazon.com/gp/primecentral', 'Select Manage membership, then End membership.', ['amazonprime', 'amznprime', 'primevideo']),
+  D('spotify', 'Spotify', 'Music', 11.99, 'monthly', 'https://www.spotify.com/account/subscription/', 'Choose Cancel subscription, or Change plan and pick Free.', ['spotify']),
+  D('siriusxm', 'SiriusXM', 'Music', 10.99, 'monthly', 'https://www.siriusxm.com/', 'Sign in, open Manage Subscription, then Cancel.', ['siriusxm', 'sirius']),
+  D('pandora', 'Pandora', 'Music', 10.99, 'monthly', 'https://www.pandora.com/', 'Open Settings, then Subscription, and cancel.', ['pandoramedia', 'pandoramusic']),
+  D('tidal', 'Tidal', 'Music', 10.99, 'monthly', 'https://account.tidal.com/', 'Open Subscription and choose Cancel subscription.', ['tidalcom', 'tidalmusic']),
+  D('apple-subs', 'Apple subscription', 'Apple', null, 'monthly', APPLE, 'Apple bills the App Store, iCloud+, Apple Music and Apple TV all as APPLE.COM/BILL. The list shows which one this is.', ['applecombill', 'itunescom'], 'apple'),
+  D('icloud', 'iCloud+', 'Apple', 2.99, 'monthly', APPLE, null, ['icloud'], 'apple'),
+  D('apple-music', 'Apple Music', 'Apple', 10.99, 'monthly', APPLE, null, [], 'apple'),
+  D('apple-tv', 'Apple TV', 'Apple', 12.99, 'monthly', APPLE, null, [], 'apple'),
+  D('apple-one', 'Apple One', 'Apple', 19.95, 'monthly', APPLE, null, [], 'apple'),
+  D('apple-arcade', 'Apple Arcade', 'Apple', 6.99, 'monthly', APPLE, null, [], 'apple'),
+  D('google-one', 'Google One', 'Cloud storage', 1.99, 'monthly', GPLAY, null, ['googleone', 'googlestorage'], 'google'),
+  D('xbox', 'Xbox Game Pass', 'Gaming', 29.99, 'monthly', 'https://account.microsoft.com/services', 'Find Game Pass, select Manage, then Cancel subscription.', ['xbox', 'gamepass']),
+  D('m365', 'Microsoft 365', 'Software', 9.99, 'monthly', 'https://account.microsoft.com/services', 'Find Microsoft 365, select Manage, then Cancel subscription.', ['microsoft365', 'microsoftoffice', 'office365', 'msft']),
+  D('psplus', 'PlayStation Plus', 'Gaming', 9.99, 'monthly', 'https://www.playstation.com/', 'Sign in, open Account Management, then Subscriptions Management, and Turn Off Auto-Renew.', ['playstation', 'sonyinteractive']),
+  D('nintendo', 'Nintendo Switch Online', 'Gaming', 19.99, 'yearly', 'https://accounts.nintendo.com/', 'In the Nintendo eShop, open your account, then Nintendo Switch Online, and turn off automatic renewal.', ['nintendo']),
+  D('discord', 'Discord Nitro', 'Gaming', 9.99, 'monthly', 'https://discord.com/', 'Open User Settings, then Subscriptions, and Cancel.', ['discord']),
+  D('twitch', 'Twitch', 'Gaming', 5.99, 'monthly', 'https://www.twitch.tv/subscriptions', "Choose the channel, then Don't Renew Subscription.", ['twitch']),
+  D('chatgpt', 'ChatGPT Plus', 'AI', 20, 'monthly', 'https://chatgpt.com/', 'Open your profile, then Settings, find your plan, and choose Cancel.', ['openai', 'chatgpt']),
+  D('claude', 'Claude Pro', 'AI', 20, 'monthly', 'https://claude.ai/settings/billing', 'Choose Cancel plan.', ['anthropic', 'claudeai']),
+  D('copilot', 'GitHub Copilot', 'Software', 10, 'monthly', 'https://github.com/settings/billing', 'Find Copilot under your plans, then Cancel.', ['github']),
+  D('adobe', 'Adobe Creative Cloud', 'Software', 22.99, 'monthly', 'https://account.adobe.com/plans', 'Choose Manage plan, then Cancel your plan.', ['adobe']),
+  D('canva', 'Canva Pro', 'Software', 15, 'monthly', 'https://www.canva.com/settings/billing-and-plans', 'Choose your plan, then Cancel subscription.', ['canva']),
+  D('dropbox', 'Dropbox', 'Cloud storage', 11.99, 'monthly', 'https://www.dropbox.com/account/plan', 'Choose Cancel plan at the bottom of the page.', ['dropbox']),
+  D('notion', 'Notion', 'Software', 12, 'monthly', 'https://www.notion.so/', 'Open Settings, then Billing, and change to the Free plan.', ['notionlabs', 'notionso', 'notion']),
+  D('grammarly', 'Grammarly Pro', 'Software', 30, 'monthly', 'https://account.grammarly.com/subscription', 'Choose Cancel Subscription.', ['grammarly']),
+  D('1password', '1Password', 'Security', 2.99, 'monthly', 'https://my.1password.com/', 'Open Billing and choose Cancel subscription.', ['1password', 'agilebits']),
+  D('nordvpn', 'NordVPN', 'Security', null, 'yearly', 'https://my.nordaccount.com/', 'Open Billing, then Subscriptions, and cancel automatic payments.', ['nordvpn', 'nordsec', 'nordaccount']),
+  D('expressvpn', 'ExpressVPN', 'Security', 12.95, 'monthly', 'https://www.expressvpn.com/', 'Sign in and turn off automatic renewal.', ['expressvpn']),
+  D('norton', 'Norton', 'Security', null, 'yearly', 'https://my.norton.com/', 'Open My Subscriptions and turn off Automatic Renewal.', ['norton']),
+  D('ring', 'Ring Protect', 'Home', 4.99, 'monthly', 'https://account.ring.com/', 'Open Plans and Billing, then Cancel plan.', ['ringprotect', 'ringyearly', 'ringmonthly']),
+  D('linkedin', 'LinkedIn Premium', 'Work', 39.99, 'monthly', 'https://www.linkedin.com/', 'Tap Me, then Premium features, Manage Premium account, and Cancel subscription.', ['linkedin']),
+  D('nyt', 'New York Times', 'News', 25, 'monthly', 'https://myaccount.nytimes.com/seg/subscription', 'Choose Cancel your subscription.', ['nytimes', 'newyorktimes']),
+  D('duolingo', 'Duolingo', 'Learning', 12.99, 'monthly', 'https://www.duolingo.com/', 'If you signed up in the app, it is billed by Apple or Google Play: cancel it there.', ['duolingo']),
+  D('chegg', 'Chegg', 'Learning', 15.95, 'monthly', 'https://www.chegg.com/', 'Open My account, then Orders, and Cancel subscription.', ['chegg']),
+  D('headspace', 'Headspace', 'Health', 12.99, 'monthly', 'https://www.headspace.com/', 'Sign in, open Manage Subscription, then Cancel.', ['headspace']),
+  D('calm', 'Calm', 'Health', 69.99, 'yearly', 'https://www.calm.com/', 'Sign in, open Manage Subscription, then turn off auto-renew.', ['calmcom', 'calmapp']),
+  D('strava', 'Strava', 'Health', 11.99, 'monthly', 'https://www.strava.com/account', 'Choose Cancel Subscription.', ['strava']),
+  D('peloton', 'Peloton', 'Health', 44, 'monthly', 'https://members.onepeloton.com/preferences/subscriptions', 'Choose your membership, then Cancel Membership.', ['peloton']),
+  D('planet-fitness', 'Planet Fitness', 'Gym', 15, 'monthly', 'https://www.planetfitness.com/', 'Some clubs let you cancel online in your account; others need a visit or a letter.', ['planetfitness', 'planetfit']),
+  D('walmart-plus', 'Walmart+', 'Shopping', 12.95, 'monthly', 'https://www.walmart.com/plus/account', 'Choose Manage membership, then Cancel membership.', ['walmart+', 'walmartplus', 'wmtplus']),
+  D('costco', 'Costco', 'Shopping', 65, 'yearly', 'https://www.costco.com/', 'Turn off auto-renew in your account, or ask at the membership counter.', ['costcomembership']),
+  D('dashpass', 'DashPass', 'Food', 9.99, 'monthly', 'https://www.doordash.com/', 'Open Account, then Manage DashPass, and End Subscription.', ['dashpass']),
+  D('uber-one', 'Uber One', 'Food', 9.99, 'monthly', 'https://www.uber.com/', 'In the Uber app, open Account, then Uber One, Manage membership, and End membership.', ['uberone']),
+  D('instacart', 'Instacart+', 'Food', 9.99, 'monthly', 'https://www.instacart.com/', 'Open Account, then Instacart+, and End membership.', ['instacart+', 'instacartplus', 'instacartmembership']),
+  D('hellofresh', 'HelloFresh', 'Food', null, 'weekly', 'https://www.hellofresh.com/', 'Open Account settings, then Plan settings, and Cancel plan.', ['hellofresh']),
+  D('tinder', 'Tinder', 'Dating', null, 'monthly', null, 'Usually billed by Apple or Google Play. Set "Billed by" to match, then cancel there.', ['tinder']),
+  D('bumble', 'Bumble', 'Dating', null, 'monthly', null, 'Usually billed by Apple or Google Play. Set "Billed by" to match, then cancel there.', ['bumble']),
+  D('hinge', 'Hinge', 'Dating', null, 'monthly', null, 'Usually billed by Apple or Google Play. Set "Billed by" to match, then cancel there.', ['hinge']),
+  D('snapchat', 'Snapchat+', 'Social', 3.99, 'monthly', null, 'Open your profile, tap the Snapchat+ card, then Manage subscription.', ['snapchat']),
+  D('x-premium', 'X Premium', 'Social', 8, 'monthly', 'https://x.com/settings/account', 'Open Settings, then Premium, and Cancel subscription.', ['xcorp', 'twitterblue']),
+  D('patreon', 'Patreon', 'Creators', null, 'monthly', 'https://www.patreon.com/settings/memberships', 'Choose the creator, then Edit, and Cancel membership.', ['patreon']),
+];
+const DIR_BY_ID = Object.fromEntries(DIRECTORY.map(s => [s.id, s]));
+const dirByName = name => { const c = compact(name); return DIRECTORY.find(s => compact(s.name) === c) || null; };
+
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'NZD', 'INR', 'JPY', 'MXN', 'BRL', 'ZAR', 'NGN', 'KES', 'PHP', 'SGD', 'AED', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN'];
+
+/* ---------- state ---------- */
+const state = {
+  subs: [],
+  prefs: { currency: 'USD' },
+  mode: 'local',          // 'local' | 'db'
+  tab: 'mine',
+  sort: 'next',
+  dirAll: false,
+  candidates: [],
+  files: [],              // {name, kind:'text'|'image', text?, file?}
+};
+const ui = lsGet(UI_KEY) || {};
+if (ui.tab === 'find') state.tab = 'find';
+if (ui.sort === 'price') state.sort = 'price';
+
+const local = lsGet(LS_KEY);
+if (local) {
+  state.subs = Array.isArray(local.subs) ? local.subs : [];
+  if (local.prefs && local.prefs.currency) state.prefs.currency = local.prefs.currency;
+}
+
+/* ---------- money & dates ---------- */
+function fmt(n) {
+  const v = Number(n) || 0;
+  try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: state.prefs.currency || 'USD' }).format(v); }
+  catch { return '$' + v.toFixed(2); }
+}
+const perMonth = s => (Number(s.price) || 0) * (CYCLES[s.cycle] || CYCLES.monthly).perMonth;
+function addCycle(d, cycle, n = 1) {
+  const x = new Date(d.getTime());
+  if (cycle === 'weekly') { x.setDate(x.getDate() + 7 * n); return x; }
+  const months = (cycle === 'yearly' ? 12 : cycle === 'quarterly' ? 3 : 1) * n;
+  const day = x.getDate();
+  x.setDate(1);
+  x.setMonth(x.getMonth() + months);
+  const dim = new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate();
+  x.setDate(Math.min(day, dim));
+  return x;
+}
+function nextRenewal(s) {
+  const base = fromISO(s.nextDate);
+  if (!base) return null;
+  const t = today();
+  let d = base, k = 0;
+  while (d < t && k < 800) { k++; d = addCycle(base, s.cycle, k); }
+  return d;
+}
+const dayFmt = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+function relDay(d) {
+  const days = Math.round((d - today()) / DAY);
+  if (days === 0) return 'today';
+  if (days === 1) return 'tomorrow';
+  if (days > 1 && days < 7) return `in ${days} days`;
+  return dayFmt.format(d);
+}
+
+/* ---------- storage: Claude db when available, this phone otherwise ---------- */
+let db = null;
+function cleanSub(s) {
+  return {
+    name: String(s.name || '').slice(0, 80),
+    serviceId: s.serviceId || null,
+    price: Number(s.price) || 0,
+    cycle: CYCLES[s.cycle] ? s.cycle : 'monthly',
+    nextDate: s.nextDate || '',
+    via: BILLERS[s.via] ? s.via : 'direct',
+    cancelUrl: s.cancelUrl || '',
+    notes: String(s.notes || '').slice(0, 500),
+    status: s.status === 'cancelled' ? 'cancelled' : 'active',
+    cancelledOn: s.cancelledOn || '',
+    createdAt: s.createdAt || Date.now(),
+    example: !!s.example,
+  };
+}
+function saveLocal() { if (state.mode === 'local') lsSet(LS_KEY, { subs: state.subs, prefs: state.prefs }); }
+function upsertLocal(sub) {
+  const i = state.subs.findIndex(s => s.id === sub.id);
+  if (i >= 0) state.subs[i] = sub; else state.subs.push(sub);
+}
+async function putSub(sub) {
+  const body = cleanSub(sub);
+  const full = { id: sub.id || newId(), ...body };
+  upsertLocal(full);
+  render();
+  if (state.mode === 'db') {
+    try { await db.collection('subs').doc(full.id).set(body); }
+    catch (e) { toast(e && e.code === 'quota_exceeded' ? 'Your list is full. Delete a few to add more.' : "Couldn't save that. Check your connection and try again."); }
+  } else saveLocal();
+  return full;
+}
+async function removeSub(id) {
+  state.subs = state.subs.filter(s => s.id !== id);
+  render();
+  if (state.mode === 'db') {
+    try { await db.collection('subs').doc(id).delete(); }
+    catch { toast("Couldn't delete that. Try again."); }
+  } else saveLocal();
+}
+async function savePrefs() {
+  if (state.mode === 'db') {
+    try { await db.doc('prefs/main').set({ currency: state.prefs.currency }); } catch { toast("Couldn't save that setting."); }
+  } else saveLocal();
+}
+
+function setSync(stateName, text) {
+  const el = $('#sync');
+  el.dataset.state = stateName;
+  el.textContent = text;
+}
+
+async function connectStore() {
+  const C = window.claude;
+  if (!C || typeof C.use !== 'function') return;
+  let user = null;
+  try { [db, user] = await Promise.all([C.use('db'), C.use('user')]); } catch { db = null; }
+  if (!db) return;
+  const owner = user ? await user.isOwner() : false;
+  if (!owner) { db = null; return; }
+
+  state.mode = 'db';
+  setSync('syncing', 'Syncing');
+  $('#store-note').textContent = 'Your list is saved to your Claude account, so it is the same on every device you use.';
+  let settled = false;
+  const timer = setTimeout(() => { if (!settled) setSync('offline', "Can't reach saved list"); }, 10000);
+  let migrated = false;
+
+  db.collection('subs').onSnapshot(snap => {
+    const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!snap.metadata.fromCache) {
+      settled = true;
+      clearTimeout(timer);
+      setSync('db', 'Saved to Claude');
+      if (!migrated) {
+        migrated = true;
+        // Move anything saved on this phone earlier into the account.
+        const prev = (lsGet(LS_KEY) || {}).subs || [];
+        const have = new Set(rows.map(r => r.id));
+        const toMove = prev.filter(s => s && s.id && !have.has(s.id));
+        (async () => {
+          for (const s of toMove) { try { await db.collection('subs').doc(s.id).set(cleanSub(s)); } catch {} }
+          lsDel(LS_KEY);
+        })();
+        if (toMove.length) rows.push(...toMove);
+      }
+    }
+    state.subs = rows;
+    render();
+  }, () => {
+    settled = true;
+    clearTimeout(timer);
+    state.mode = 'local';
+    setSync('local', 'On this phone');
+    $('#store-note').textContent = 'Your list is saved on this phone.';
+  });
+
+  db.doc('prefs/main').onSnapshot(snap => {
+    if (snap.exists && snap.data().currency) { state.prefs.currency = snap.data().currency; render(); }
+  }, () => {});
+}
+
+/* ---------- rendering ---------- */
+function tileHTML(name) {
+  return `<span class="tile" style="--h:${hueOf(compact(name))}" aria-hidden="true">${esc(initials(name))}</span>`;
+}
+function subRowHTML(s) {
+  const nr = nextRenewal(s);
+  const cyc = CYCLES[s.cycle] || CYCLES.monthly;
+  const chips = [];
+  if (s.example) chips.push('<span class="chip ex">Example</span>');
+  if (s.status === 'active' && nr && (nr - today()) / DAY <= 3) chips.push(`<span class="chip soon">Renews ${esc(relDay(nr))}</span>`);
+  const metaDate = s.status === 'cancelled'
+    ? `Cancelled ${s.cancelledOn ? esc(dayFmt.format(fromISO(s.cancelledOn))) : ''}`
+    : (nr ? `Renews ${esc(dayFmt.format(nr))}${(nr - today()) / DAY > 3 && (nr - today()) / DAY < 7 ? ' · ' + esc(relDay(nr)) : ''}` : 'Renewal date not set');
+  const via = s.via && s.via !== 'direct' ? `Billed by ${esc(BILLERS[s.via]?.label || s.via)}` : '';
+  const actions = s.status === 'cancelled'
+    ? `<button class="btn-quiet" type="button" data-act="restore" data-id="${esc(s.id)}">Restore</button>
+       <button class="btn-quiet" type="button" data-act="edit" data-id="${esc(s.id)}">Edit</button>`
+    : `<button class="btn-cut" type="button" data-act="cancel" data-id="${esc(s.id)}">Cancel it</button>
+       <button class="btn-quiet" type="button" data-act="edit" data-id="${esc(s.id)}">Edit</button>`;
+  return `<li class="row${s.status === 'cancelled' ? ' is-cancelled' : ''}">
+    ${tileHTML(s.name)}
+    <div class="row-main">
+      <div><span class="row-name">${esc(s.name)}</span> ${chips.length ? `<span class="chips">${chips.join('')}</span>` : ''}</div>
+      <div class="row-meta mono">${metaDate}</div>
+      ${via ? `<div class="row-meta">${via}</div>` : ''}
+      <div class="row-actions">${actions}</div>
+    </div>
+    <div class="row-amt mono">${esc(fmt(s.price))}<small>${esc(cyc.short)}</small></div>
+  </li>`;
+}
+
+function render() {
+  const active = state.subs.filter(s => s.status !== 'cancelled');
+  const cancelled = state.subs.filter(s => s.status === 'cancelled');
+  const monthly = active.reduce((a, s) => a + perMonth(s), 0);
+  const now = today();
+
+  $('#h-eyebrow').textContent = 'Statement · ' + new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(now);
+  $('#h-month').textContent = fmt(monthly);
+  $('#h-year').textContent = fmt(monthly * 12) + ' a year';
+  $('#h-count').textContent = active.length === 1 ? '1 subscription' : `${active.length} subscriptions`;
+
+  const upcoming = active.map(s => ({ s, d: nextRenewal(s) })).filter(x => x.d).sort((a, b) => a.d - b.d);
+  const nx = upcoming[0];
+  $('#h-next').innerHTML = nx
+    ? `Next charge: <strong>${esc(nx.s.name)}</strong> · <span class="mono">${esc(fmt(nx.s.price))}</span> · ${esc(relDay(nx.d))}`
+    : (active.length ? 'Add renewal dates to see what is due next.' : 'Add your subscriptions to see what is due next.');
+
+  const saved = cancelled.reduce((a, s) => a + perMonth(s), 0) * 12;
+  const savedEl = $('#h-saved');
+  savedEl.hidden = !cancelled.length;
+  if (cancelled.length) savedEl.textContent = `You're saving ${fmt(saved)} a year by cancelling ${cancelled.length === 1 ? '1 subscription' : cancelled.length + ' subscriptions'}.`;
+
+  const ex = state.subs.filter(s => s.example);
+  $('#ex-banner').hidden = !ex.length;
+  if (ex.length) $('#ex-text').textContent = `${ex.map(s => s.name).join(', ')} ${ex.length === 1 ? 'is an example' : 'are examples'} to show how it works. Remove them once you've added your own.`;
+
+  const sorted = active.slice().sort(state.sort === 'price'
+    ? (a, b) => perMonth(b) - perMonth(a)
+    : (a, b) => { const da = nextRenewal(a), dbb = nextRenewal(b); if (!da && !dbb) return a.name.localeCompare(b.name); if (!da) return 1; if (!dbb) return -1; return da - dbb; });
+  $('#active-wrap').hidden = !active.length;
+  $('#active-count').textContent = active.length ? String(active.length) : '';
+  $('#active-list').innerHTML = sorted.map(subRowHTML).join('');
+  document.querySelectorAll('[data-sort]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sort === state.sort)));
+
+  $('#empty').hidden = !!state.subs.length;
+  const cw = $('#cancelled-wrap');
+  cw.hidden = !cancelled.length;
+  $('#cancelled-count').textContent = cancelled.length ? String(cancelled.length) : '';
+  $('#cancelled-list').innerHTML = cancelled.map(subRowHTML).join('');
+
+  $('#tab-count').textContent = active.length ? `(${active.length})` : '';
+
+  const cur = $('#set-cur');
+  if (!cur.options.length) cur.innerHTML = CURRENCIES.map(c => `<option value="${c}">${c}</option>`).join('');
+  cur.value = state.prefs.currency;
+
+  renderDir();
+  if (state.candidates.length) renderCandidates();
+}
+
+function inList(name, serviceId, price) {
+  const c = compact(name);
+  return state.subs.some(s => s.status !== 'cancelled' && (
+    (serviceId && serviceId !== 'apple-subs' && s.serviceId === serviceId) ||
+    (compact(s.name) === c && (serviceId !== 'apple-subs' || Math.abs((Number(s.price) || 0) - (Number(price) || 0)) < 0.01))
+  ));
+}
+
+function renderDir() {
+  const q = compact($('#dir-search').value);
+  let items = DIRECTORY.filter(s => s.id !== 'apple-subs');
+  if (q) items = items.filter(s => compact(s.name).includes(q) || compact(s.cat).includes(q));
+  const limit = q || state.dirAll ? items.length : 12;
+  $('#dir-list').innerHTML = items.slice(0, limit).map(s => {
+    const have = inList(s.name, s.id);
+    const price = s.price != null && state.prefs.currency === 'USD' ? ` · <span class="mono">${esc(fmt(s.price))}${CYCLES[s.cycle].short}</span>` : '';
+    return `<li class="row">
+      ${tileHTML(s.name)}
+      <div class="row-main"><span class="row-name">${esc(s.name)}</span><span class="row-meta">${esc(s.cat)}${price}</span></div>
+      ${have ? '<span class="chip done">In your list</span>' : `<button class="btn-secondary" type="button" data-act="dir-add" data-svc="${esc(s.id)}">Add</button>`}
+    </li>`;
+  }).join('') || `<li class="row"><span></span><div class="row-main"><span class="row-meta">No match. Use the Add button at the top to add it by hand.</span></div><span></span></li>`;
+  const more = $('#dir-more');
+  more.hidden = !!q || state.dirAll || items.length <= 12;
+  more.textContent = `Show all ${items.length}`;
+}
+
+/* ---------- tabs ---------- */
+function setTab(t) {
+  state.tab = t;
+  $('#view-mine').hidden = t !== 'mine';
+  $('#view-find').hidden = t !== 'find';
+  $('#tab-mine').setAttribute('aria-selected', String(t === 'mine'));
+  $('#tab-find').setAttribute('aria-selected', String(t === 'find'));
+  lsSet(UI_KEY, { tab: state.tab, sort: state.sort });
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ---------- sheet ---------- */
+const sheet = $('#sheet');
+function openSheet(html, mount) {
+  $('#sheet-body').innerHTML = `<div class="grabber" aria-hidden="true"></div>${html}`;
+  if (!sheet.open) { try { sheet.showModal(); } catch { sheet.setAttribute('open', ''); } }
+  if (mount) mount($('#sheet-body'));
+}
+function closeSheet() { try { sheet.close(); } catch { sheet.removeAttribute('open'); } }
+sheet.addEventListener('click', e => { if (e.target === sheet) closeSheet(); });
+const closeBtn = `<button class="x" type="button" data-act="close" aria-label="Close"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`;
+
+/* Cancel flow */
+function cancelPlan(s) {
+  const svc = DIR_BY_ID[s.serviceId] || dirByName(s.name);
+  const via = s.via || 'direct';
+  const b = BILLERS[via];
+  if (b && b.url) {
+    const own = svc && svc.via === via;   // e.g. iCloud+ through Apple
+    return {
+      note: own ? '' : `You pay for ${s.name} through ${b.label}, so cancel it there. Cancelling on ${s.name}'s own website won't stop ${b.label} from charging you.`,
+      url: b.url, label: `Open ${b.short} subscriptions`, how: (own && svc.how) || b.how,
+    };
+  }
+  const url = s.cancelUrl || (svc && svc.url) || '';
+  return { url, label: url ? `Open ${s.name} account page` : '', how: (svc && svc.how) || 'Sign in and look for Account, Membership, Billing or Plan, then choose Cancel.' };
+}
+function openCancel(id) {
+  const s = state.subs.find(x => x.id === id);
+  if (!s) return;
+  const p = cancelPlan(s);
+  const search = 'https://www.google.com/search?q=' + encodeURIComponent(`how to cancel ${s.name} subscription`);
+  const yearly = perMonth(s) * 12;
+  openSheet(`
+    <div class="sheet-head"><h2 id="sheet-title">Cancel ${esc(s.name)}</h2>${closeBtn}</div>
+    <p style="margin:0">Cancelling saves you <strong class="mono">${esc(fmt(yearly))}</strong> a year.${s.example ? ' <span class="chip ex">Example</span>' : ''}</p>
+    ${p.note ? `<div class="note">${esc(p.note)}</div>` : ''}
+    <ol class="steps">
+      <li><div>
+        <strong>Open the cancel page</strong>
+        ${p.url ? `<a class="btn-cut btn-block" href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.label)} ↗</a>` : ''}
+        <span class="fine">What to look for: ${esc(p.how)}</span>
+        <a class="fine" href="${esc(search)}" target="_blank" rel="noopener">Search how to cancel ${esc(s.name)} ↗</a>
+      </div></li>
+      <li><div><strong>Confirm on their site</strong><span class="fine">They will ask you to sign in and may offer a discount to stay. Keep going until you see a confirmation, or an email that says it's cancelled.</span></div></li>
+      <li><div><strong>Come back and mark it</strong>
+        <button class="btn-ok btn-block" type="button" data-act="mark-cancelled" data-id="${esc(s.id)}">I cancelled it</button>
+      </div></li>
+    </ol>
+    <p class="fine">Still getting charged after you cancel? Your bank or card app can usually block a merchant or send you a new card number.</p>
+  `);
+}
+
+/* Add / edit */
+function openForm(opts = {}) {
+  const s = opts.id ? state.subs.find(x => x.id === opts.id) : null;
+  const pre = s || opts.prefill || {};
+  const svc = pre.serviceId ? DIR_BY_ID[pre.serviceId] : null;
+  const usd = state.prefs.currency === 'USD';
+  const val = {
+    name: pre.name || '',
+    price: pre.price != null && pre.price !== '' ? pre.price : (svc && svc.price != null && usd ? svc.price : ''),
+    cycle: pre.cycle || (svc && svc.cycle) || 'monthly',
+    nextDate: pre.nextDate || '',
+    via: pre.via || (svc && svc.via) || 'direct',
+    cancelUrl: pre.cancelUrl || '',
+    notes: pre.notes || '',
+  };
+  openSheet(`
+    <div class="sheet-head"><h2 id="sheet-title">${s ? 'Edit ' + esc(s.name) : 'Add a subscription'}</h2>${closeBtn}</div>
+    <form id="sub-form" novalidate style="display:grid;gap:14px">
+      <div class="field">
+        <label for="f-name">Name</label>
+        <input type="text" id="f-name" list="dir-names" autocomplete="off" value="${esc(val.name)}" placeholder="Netflix, gym, newspaper…" required>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label for="f-price">Price (${esc(state.prefs.currency)})</label><input type="number" id="f-price" inputmode="decimal" step="0.01" min="0" value="${esc(val.price)}" placeholder="0.00"></div>
+        <div class="field"><label for="f-cycle">Every</label>
+          <select id="f-cycle">${Object.entries(CYCLES).map(([k, c]) => `<option value="${k}"${k === val.cycle ? ' selected' : ''}>${esc(c.word)}</option>`).join('')}</select></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label for="f-next">Next charge</label><input type="date" id="f-next" value="${esc(val.nextDate)}"></div>
+        <div class="field"><label for="f-via">Billed by</label>
+          <select id="f-via">${Object.entries(BILLERS).map(([k, b]) => `<option value="${k}"${k === val.via ? ' selected' : ''}>${esc(b.name)}</option>`).join('')}</select></div>
+      </div>
+      <p class="fine" style="margin-top:-6px">Not sure who bills you? Look at the charge on your statement: APPLE.COM/BILL means Apple, GOOGLE * means Google Play, PAYPAL * means PayPal.</p>
+      <div class="field"><label for="f-url">Cancel link (optional)</label><input type="url" id="f-url" inputmode="url" value="${esc(val.cancelUrl)}" placeholder="https://"></div>
+      <div class="field"><label for="f-notes">Notes (optional)</label><input type="text" id="f-notes" value="${esc(val.notes)}" placeholder="Shared with family, free trial ends…"></div>
+      <p class="err-text" id="f-err" role="alert"></p>
+      <button class="btn-primary btn-block" type="submit">${s ? 'Save changes' : 'Add to my list'}</button>
+      ${s ? `<div class="btn-row">
+        ${s.status === 'cancelled'
+          ? `<button class="btn-quiet" type="button" data-act="restore" data-id="${esc(s.id)}">Move back to active</button>`
+          : `<button class="btn-quiet" type="button" data-act="cancel" data-id="${esc(s.id)}">Cancel it</button>`}
+        <button class="btn-cut" type="button" id="f-del">Delete</button>
+      </div>` : ''}
+    </form>
+  `, body => {
+    const form = $('#sub-form', body);
+    const nameEl = $('#f-name', body);
+    let serviceId = (s && s.serviceId) || (opts.prefill && opts.prefill.serviceId) || null;
+    nameEl.addEventListener('change', () => {
+      const m = dirByName(nameEl.value);
+      serviceId = m ? m.id : null;
+      if (m) {
+        if (!$('#f-price', body).value && m.price != null && state.prefs.currency === 'USD') $('#f-price', body).value = m.price;
+        $('#f-cycle', body).value = m.cycle;
+        if (m.via !== 'direct') $('#f-via', body).value = m.via;
+      }
+    });
+    if (!s) setTimeout(() => { if (!val.name) nameEl.focus(); }, 50);
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = nameEl.value.trim();
+      const price = parseFloat($('#f-price', body).value);
+      const err = $('#f-err', body);
+      if (!name) { err.textContent = 'Give it a name, like Netflix.'; nameEl.focus(); return; }
+      if (!(price >= 0)) { err.textContent = 'Enter the price you pay, like 9.99.'; $('#f-price', body).focus(); return; }
+      let url = $('#f-url', body).value.trim();
+      if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const sub = {
+        ...(s || {}),
+        id: s ? s.id : newId(),
+        name, price,
+        serviceId: serviceId || (dirByName(name) || {}).id || null,
+        cycle: $('#f-cycle', body).value,
+        nextDate: $('#f-next', body).value,
+        via: $('#f-via', body).value,
+        cancelUrl: url,
+        notes: $('#f-notes', body).value.trim(),
+        status: s ? s.status : 'active',
+        example: s ? s.example && compact(s.name) === compact(name) : false,
+      };
+      closeSheet();
+      await putSub(sub);
+      toast(s ? 'Saved' : `Added ${name}`);
+    });
+    const del = $('#f-del', body);
+    if (del) {
+      let armed = false;
+      del.addEventListener('click', async () => {
+        if (!armed) { armed = true; del.textContent = 'Tap again to delete'; return; }
+        closeSheet();
+        await removeSub(s.id);
+        toast(`Deleted ${s.name}`);
+      });
+    }
+  });
+}
+
+/* ---------- statement parsing (runs on the phone) ---------- */
+const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11 };
+const MON_RE = '(jan|feb|mar|apr|may|jun|jul|aug|sept|sep|oct|nov|dec)[a-z]*\\.?';
+function mkDate(y, m, d) {
+  if (m < 0 || m > 11 || d < 1 || d > 31) return null;
+  const t = today();
+  let year = y;
+  if (year == null) {
+    year = t.getFullYear();
+    const guess = new Date(year, m, d);
+    if (guess - t > 7 * DAY) year -= 1;
+  } else if (year < 100) year += 2000;
+  const dt = new Date(year, m, d);
+  return dt.getMonth() === m ? dt : null;
+}
+function findDate(s, dayFirst) {
+  let m;
+  if ((m = s.match(/\b(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b/))) return { d: mkDate(+m[1], +m[2] - 1, +m[3]), raw: m[0] };
+  if ((m = s.match(/\b(\d{1,2})([/-])(\d{1,2})(?:\2(\d{2,4}))?\b/)) || (m = s.match(/\b(\d{1,2})(\.)(\d{1,2})\.(\d{2,4})\b/))) {
+    let a = +m[1], b = +m[3], mo, da;
+    if (dayFirst || m[2] === '.') { da = a; mo = b; } else { mo = a; da = b; }
+    if (mo > 12 && da <= 12) [mo, da] = [da, mo];
+    const y = m[4] ? +m[4] : null;
+    const d = mkDate(y, mo - 1, da);
+    if (d) return { d, raw: m[0] };
+  }
+  if ((m = s.match(new RegExp('\\b(\\d{1,2})\\s+' + MON_RE + ',?\\s*(\\d{4})?', 'i')))) return { d: mkDate(m[3] ? +m[3] : null, MONTHS[m[2].toLowerCase()], +m[1]), raw: m[0] };
+  if ((m = s.match(new RegExp('\\b' + MON_RE + '\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?\\b', 'i')))) return { d: mkDate(m[3] ? +m[3] : null, MONTHS[m[1].toLowerCase()], +m[2]), raw: m[0] };
+  return null;
+}
+function parseMoney(str) {
+  let s = String(str ?? '').trim();
+  if (!s) return null;
+  const neg = /^\(.*\)$/.test(s) || /^[^\d]*[-−]/.test(s) || /[-−]$/.test(s) || /\bDR\b/i.test(s);
+  s = s.replace(/[^\d.,]/g, '');
+  if (!s) return null;
+  const lastDot = s.lastIndexOf('.'), lastComma = s.lastIndexOf(',');
+  if (lastComma > lastDot && /,\d{1,2}$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+  else s = s.replace(/,/g, '');
+  const v = parseFloat(s);
+  return isFinite(v) ? { v: Math.abs(v), neg } : null;
+}
+const MONEY_RE = /\(?[-−]?\s?[$£€]?\s?\d{1,3}(?:[,\s]\d{3})*[.,]\d{2}\)?(?:\s?(?:CR|DR)\b|-(?!\d))?|\(?[-−]?[$£€]?\d+[.,]\d{2}\)?/gi;
+
+function splitCSVRow(line, delim) {
+  const out = []; let cur = ''; let q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === delim) { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out.map(x => x.trim());
+}
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return null;
+  const sample = lines.slice(0, 5).join('\n');
+  const delim = ['\t', ';', ','].map(d => [d, (sample.match(new RegExp(d === '\t' ? '\\t' : d, 'g')) || []).length]).sort((a, b) => b[1] - a[1])[0];
+  if (delim[1] < 4) return null;
+  const rows = lines.map(l => splitCSVRow(l, delim[0]));
+  let h = -1;
+  for (let i = 0; i < Math.min(rows.length, 15); i++) if (rows[i].some(c => /date/i.test(c))) { h = i; break; }
+  if (h < 0) return null;
+  const head = rows[h].map(c => c.toLowerCase());
+  const find = re => head.findIndex(c => re.test(c));
+  const dateCol = [/trans.*date/, /post.*date/, /^date$/, /date/].map(find).find(i => i >= 0);
+  const descCol = [/description/, /payee/, /merchant/, /narrative/, /details/, /^name$/, /memo/, /transaction/].map(find).find(i => i >= 0 && i !== dateCol);
+  let amtCol = find(/^amount|amount$|amount \(/);
+  let debitCol = find(/debit|withdraw|money out|paid out|outflow|spent/);
+  let creditCol = find(/credit|deposit|money in|paid in|inflow|received/);
+  if (debitCol >= 0 && debitCol === creditCol) { if (amtCol < 0) amtCol = debitCol; debitCol = -1; creditCol = -1; }
+  if (descCol == null || descCol < 0) return null;
+  const dayFirst = rows.slice(h + 1).some(r => { const m = /^(\d{1,2})[/.-](\d{1,2})/.exec(r[dateCol] || ''); return m && +m[1] > 12; });
+  const txs = [];
+  for (const r of rows.slice(h + 1)) {
+    const desc = [r[descCol], descCol !== find(/memo/) && find(/memo/) >= 0 ? r[find(/memo/)] : ''].filter(Boolean).join(' ');
+    if (!desc) continue;
+    const dd = dateCol >= 0 ? findDate(r[dateCol] || '', dayFirst) : null;
+    let amt = null, isCharge = null;
+    if (debitCol >= 0 && r[debitCol] && parseMoney(r[debitCol])) { amt = parseMoney(r[debitCol]); isCharge = true; }
+    else if (creditCol >= 0 && r[creditCol] && parseMoney(r[creditCol]) && amtCol < 0) { amt = parseMoney(r[creditCol]); isCharge = false; }
+    else if (amtCol >= 0) amt = parseMoney(r[amtCol]);
+    if (!amt || !amt.v) continue;
+    txs.push({ date: dd && dd.d, desc, amount: amt.v, neg: amt.neg, isCharge });
+  }
+  return txs.length ? txs : null;
+}
+function parseOFX(text) {
+  if (!/<STMTTRN>/i.test(text)) return null;
+  const txs = [];
+  const blocks = text.split(/<STMTTRN>/i).slice(1);
+  const tag = (b, t) => { const m = new RegExp('<' + t + '>\\s*([^<\\r\\n]+)', 'i').exec(b); return m ? m[1].trim() : ''; };
+  for (const b of blocks) {
+    const amt = parseFloat(tag(b, 'TRNAMT'));
+    const dt = tag(b, 'DTPOSTED');
+    const d = /^(\d{4})(\d{2})(\d{2})/.exec(dt);
+    const desc = [tag(b, 'NAME'), tag(b, 'MEMO')].filter(Boolean).join(' ');
+    if (!isFinite(amt) || !desc) continue;
+    txs.push({ date: d ? mkDate(+d[1], +d[2] - 1, +d[3]) : null, desc, amount: Math.abs(amt), neg: amt < 0, isCharge: amt < 0 });
+  }
+  return txs.length ? txs : null;
+}
+function parseLines(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const dayFirst = lines.some(l => { const m = /\b(\d{1,2})[/](\d{1,2})[/]\d{2,4}\b/.exec(l); return m && +m[1] > 12; });
+  const txs = [];
+  for (const line of lines) {
+    const dd = findDate(line, dayFirst);
+    let rest = dd ? line.replace(dd.raw, ' ') : line;
+    const monies = rest.match(MONEY_RE);
+    if (!monies) continue;
+    const first = monies[0];
+    const amt = parseMoney(first);
+    if (!amt || !amt.v) continue;
+    for (const m of monies) rest = rest.replace(m, ' ');
+    const desc = rest.replace(/\s+/g, ' ').trim();
+    if (!/[a-z]{3}/i.test(desc)) continue;
+    txs.push({ date: dd && dd.d, desc, amount: amt.v, neg: amt.neg || /^\s*[-−]/.test(first), isCharge: /\+\s*[$£€]?\d/.test(line) && !amt.neg ? false : null });
+  }
+  return txs;
+}
+function parseStatement(text) {
+  return parseOFX(text) || parseCSV(text) || parseLines(text);
+}
+
+const EXCLUDE = /\b(transfer|xfer|deposit|payroll|salary|interest|atm|withdrawal|zelle|refund|reversal|cashback|cash back|thank you|payment received|autopay payment|online payment|loan|mortgage|rent)\b/i;
+function billerOf(desc) {
+  const u = desc.toUpperCase();
+  if (/APPLE\.?\s?COM\s*\/?\s*BILL|ITUNES/.test(u)) return 'apple';
+  if (/\bGOOGLE\s*\*|GOOGLE PLAY/.test(u)) return 'google';
+  if (/PAYPAL\s*\*/.test(u)) return 'paypal';
+  if (/AMZN DIGITAL|AMAZON DIGITAL|PRIME VIDEO CHANNEL|AMAZON CHANNELS/.test(u)) return 'amazon';
+  return 'direct';
+}
+function matchService(desc) {
+  const c = compact(desc);
+  for (const s of DIRECTORY) if (s.match.some(p => p && c.includes(p))) return s;
+  return null;
+}
+const titleCase = s => s.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase());
+function merchantKey(desc) {
+  const u = desc.toUpperCase()
+    .replace(/PAYPAL\s*\*|GOOGLE\s*\*|\bSQ\s*\*|\bTST\s*\*|\bSP\s*\*|\bPP\s*\*/g, ' ')
+    .replace(/\b(POS|DEBIT|CREDIT|CARD|PURCHASE|RECURRING|PAYMENT|ACH|CHECKCARD|CHECK CARD|VISA|MASTERCARD|PREAUTHORIZED|AUTHORIZED|ONLINE|WWW|COM|NET|INC|LLC|LTD|CORP|USA|SUBSCRIPTION|BILL|MEMBERSHIP|MONTHLY|FEE|FEES|PMT|DES|ID|INDN|CO|PPD|WEB)\b/g, ' ')
+    .replace(/[^A-Z ]/g, ' ')
+    .replace(/\b[A-Z]{1,2}\b/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+  return u.split(' ').filter(w => w.length >= 3).slice(0, 3).join(' ');
+}
+function classify(days) {
+  if (days >= 5 && days <= 9) return 'weekly';
+  if (days >= 25 && days <= 36) return 'monthly';
+  if (days >= 80 && days <= 100) return 'quarterly';
+  if (days >= 340 && days <= 390) return 'yearly';
+  return null;
+}
+function detect(txs) {
+  const signed = txs.filter(t => t.isCharge == null);
+  const negs = signed.filter(t => t.neg).length;
+  const chargesAreNeg = negs > 0 && negs >= signed.length - negs;
+  const charges = txs.filter(t => t.isCharge === true || (t.isCharge == null && (chargesAreNeg ? t.neg : !t.neg)));
+  const groups = new Map();
+  for (const t of charges) {
+    if (EXCLUDE.test(t.desc)) continue;
+    const svc = matchService(t.desc);
+    const via = billerOf(t.desc);
+    let key;
+    if (svc) key = 'svc:' + svc.id + (svc.id === 'apple-subs' ? ':' + t.amount.toFixed(2) : '');
+    else { const mk = merchantKey(t.desc); if (!mk) continue; key = 'm:' + mk + (via === 'google' ? ':g' : ''); }
+    if (!groups.has(key)) groups.set(key, { svc, via, key, txs: [] });
+    const g = groups.get(key);
+    if (via !== 'direct') g.via = via;
+    g.txs.push(t);
+  }
+  const out = [];
+  for (const g of groups.values()) {
+    g.txs.sort((a, b) => (a.date || 0) - (b.date || 0));
+    const dated = g.txs.filter(t => t.date);
+    let cycle = null;
+    if (dated.length >= 2) {
+      const gaps = [];
+      for (let i = 1; i < dated.length; i++) gaps.push(Math.round((dated[i].date - dated[i - 1].date) / DAY));
+      gaps.sort((a, b) => a - b);
+      cycle = classify(gaps[Math.floor(gaps.length / 2)]);
+    }
+    const amts = g.txs.map(t => t.amount);
+    const steady = Math.max(...amts) <= Math.min(...amts) * 1.1 + 0.01;
+    let confidence;
+    if (g.svc) { cycle = cycle || g.svc.cycle || 'monthly'; confidence = 'known'; }
+    else if (dated.length >= 2 && cycle && steady) confidence = 'repeats';
+    else continue;
+    const last = g.txs[g.txs.length - 1];
+    let next = '';
+    if (last.date) { let d = addCycle(last.date, cycle), k = 1; while (d < today() && k < 400) { k++; d = addCycle(last.date, cycle, k); } next = toISO(d); }
+    const name = g.svc ? g.svc.name : titleCase(g.key.slice(2).replace(/:g$/, ''));
+    const via = g.via !== 'direct' ? g.via : (g.svc ? g.svc.via : 'direct');
+    out.push({ name, serviceId: g.svc ? g.svc.id : null, price: last.amount, cycle, nextDate: next, via, lastDate: last.date ? toISO(last.date) : '', count: g.txs.length, confidence, descriptor: last.desc });
+  }
+  out.sort((a, b) => (a.confidence === b.confidence ? 0 : a.confidence === 'known' ? -1 : 1) || b.price - a.price);
+  return out;
+}
+
+/* ---------- statement files ---------- */
+let pdfLib = null;
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+}
+async function pdfToText(file) {
+  if (!pdfLib) {
+    if (!window.pdfjsLib) await loadScript(PDFJS);
+    pdfLib = window.pdfjsLib;
+    pdfLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  }
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfLib.getDocument({ data: buf, isEvalSupported: false }).promise;
+  const out = [];
+  for (let p = 1; p <= Math.min(pdf.numPages, 40); p++) {
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    const rows = [];
+    for (const it of tc.items) {
+      if (!it.str || !it.str.trim()) continue;
+      const y = it.transform[5], x = it.transform[4];
+      let row = rows.find(r => Math.abs(r.y - y) <= 2.5);
+      if (!row) { row = { y, items: [] }; rows.push(row); }
+      row.items.push({ x, s: it.str });
+    }
+    rows.sort((a, b) => b.y - a.y);
+    for (const r of rows) out.push(r.items.sort((a, b) => a.x - b.x).map(i => i.s).join('  ').replace(/\s{3,}/g, '  ').trim());
+  }
+  return out.join('\n');
+}
+async function readFiles(fileList) {
+  const status = $('#st-status');
+  status.className = 'status';
+  for (const f of fileList) {
+    const lower = f.name.toLowerCase();
+    try {
+      if (f.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|webp|gif)$/.test(lower)) {
+        state.files.push({ name: f.name, kind: 'image', file: f });
+      } else if (f.type === 'application/pdf' || lower.endsWith('.pdf')) {
+        status.textContent = `Reading ${f.name}…`;
+        const text = await pdfToText(f);
+        state.files.push({ name: f.name, kind: 'text', text });
+      } else {
+        state.files.push({ name: f.name, kind: 'text', text: await f.text() });
+      }
+    } catch {
+      status.className = 'status err';
+      status.textContent = `Couldn't read ${f.name}. Try a CSV download from your bank, or copy the transactions and paste them below.`;
+      renderFiles();
+      return;
+    }
+  }
+  status.textContent = '';
+  renderFiles();
+}
+function renderFiles() {
+  $('#st-files').innerHTML = state.files.map((f, i) =>
+    `<span class="chip">${f.kind === 'image' ? 'Image' : 'File'} · ${esc(f.name)} <button type="button" class="textlink" style="font-size:12px;margin-left:4px" data-act="rm-file" data-i="${i}" aria-label="Remove ${esc(f.name)}">×</button></span>`).join('');
+  updatePrivacy();
+}
+function statementText() {
+  return [...state.files.filter(f => f.kind === 'text').map(f => f.text), $('#st-text').value].filter(Boolean).join('\n');
+}
+
+/* ---------- scan results ---------- */
+function renderCandidates(heading) {
+  const box = $('#st-results');
+  if (!state.candidates.length) { box.innerHTML = ''; return; }
+  const items = state.candidates.map((c, i) => {
+    const dupe = inList(c.name, c.serviceId, c.price);
+    const why = c.confidence === 'known' ? 'Known service' : c.confidence === 'claude' ? 'Found by Claude' : `Repeats ${CYCLES[c.cycle].adj.toLowerCase()}`;
+    const last = c.lastDate ? ` · last ${dayFmt.format(fromISO(c.lastDate))}` : '';
+    return `<li><label class="cand${dupe ? ' is-dupe' : ''}" for="cand-${i}">
+      <input type="checkbox" id="cand-${i}" data-cand="${i}" ${dupe ? 'disabled' : (c.checked !== false ? 'checked' : '')}>
+      ${tileHTML(c.name)}
+      <span class="row-main">
+        <span class="row-name">${esc(c.name)}</span>
+        <span class="row-meta mono">${esc(c.descriptor || '')}</span>
+        <span class="row-meta">${dupe ? 'Already in your list' : esc(why + last)}${c.via && c.via !== 'direct' ? ' · billed by ' + esc(BILLERS[c.via].label) : ''}</span>
+      </span>
+      <span class="row-amt mono">${esc(fmt(c.price))}<small>${esc(CYCLES[c.cycle].short)}</small></span>
+    </label></li>`;
+  }).join('');
+  const n = state.candidates.filter((c, i) => c.checked !== false && !inList(c.name, c.serviceId, c.price)).length;
+  box.innerHTML = `<div class="results">
+    <h3>${esc(heading || box.dataset.heading || `Found ${state.candidates.length} possible subscription${state.candidates.length === 1 ? '' : 's'}`)}</h3>
+    <ul class="ledger">${items}</ul>
+    <button class="btn-primary btn-block" type="button" data-act="add-cands" ${n ? '' : 'disabled'}>${n ? `Add ${n} to my list` : 'Nothing new to add'}</button>
+    <p class="fine">Untick anything that isn't a subscription. You can edit prices and dates after adding.</p>
+  </div>`;
+  if (heading) box.dataset.heading = heading;
+}
+function scanLocal() {
+  const status = $('#st-status');
+  status.className = 'status';
+  const text = statementText();
+  const hasImages = state.files.some(f => f.kind === 'image');
+  if (!text.trim()) {
+    state.candidates = [];
+    renderCandidates();
+    status.className = 'status err';
+    status.textContent = hasImages
+      ? (sampleFn ? 'Screenshots need Claude to read them. Tap Ask Claude to read it.' : "Screenshots can't be read here. Upload a CSV or PDF, or paste the transactions.")
+      : 'Choose a statement file or paste some transactions first.';
+    return;
+  }
+  const txs = parseStatement(text);
+  const found = detect(txs).map(c => ({ ...c, checked: true }));
+  state.candidates = found;
+  $('#st-results').dataset.heading = '';
+  if (!found.length) {
+    status.textContent = txs.length
+      ? `Read ${txs.length} transactions but found no subscriptions.${sampleFn ? ' Ask Claude to read it for a second look.' : ''}`
+      : `Couldn't find any transactions in that text.${sampleFn ? ' Ask Claude to read it instead.' : ' Try a CSV download from your bank.'}`;
+  } else {
+    status.textContent = `Read ${txs.length} transactions.${hasImages ? ' Screenshots were skipped; ask Claude to read those.' : ''}`;
+  }
+  renderCandidates(found.length ? `Found ${found.length} possible subscription${found.length === 1 ? '' : 's'}` : '');
+}
+
+/* ---------- Claude reading (optional) ---------- */
+let sampleFn = null;
+let claudeCtl = null;
+function updatePrivacy() {
+  $('#st-privacy').textContent = sampleFn
+    ? 'Scanning on this phone keeps your statement on your device. Ask Claude sends it to Claude on your account, which works better for screenshots and messy PDFs.'
+    : 'Scanning on this phone keeps your statement on your device.';
+}
+async function scanWithClaude() {
+  const status = $('#st-status');
+  const btn = $('#st-claude');
+  if (claudeCtl) { claudeCtl.abort(); return; }
+  const text = statementText().slice(0, 120000);
+  const images = state.files.filter(f => f.kind === 'image').map(f => f.file);
+  if (!text.trim() && !images.length) { status.className = 'status err'; status.textContent = 'Choose a statement, screenshots, or paste some transactions first.'; return; }
+  let imgs = [];
+  if (images.length) {
+    const lim = await sampleFn.limits().catch(() => null);
+    if (lim && lim.images) imgs = images.slice(0, lim.images.maxCount);
+    else if (!text.trim()) { status.className = 'status err'; status.textContent = "Claude can't look at images here. Upload a CSV or PDF, or paste the transactions."; return; }
+  }
+  const prompt = `You are reading someone's bank or card statement to find their subscriptions and other recurring charges: streaming, music, apps, software, cloud storage, memberships, gyms, news, meal kits and similar. Ignore one-off purchases, groceries, fuel, transfers, rent, loans, utilities, salary and refunds.
+Today's date is ${toISO(today())}.
+Reply with only a JSON array. Each item: {"name": string (the service's everyday name, like "Netflix"), "amount": number (latest charge, positive), "cycle": "weekly" | "monthly" | "quarterly" | "yearly", "lastDate": "YYYY-MM-DD" or null, "billedVia": "direct" | "apple" | "google" | "amazon" | "paypal", "descriptor": string (the charge text as it appears on the statement)}. Use "apple" for APPLE.COM/BILL, "google" for GOOGLE *, "paypal" for PAYPAL *. Reply [] if there are none.
+${imgs.length ? `The ${imgs.length} attached image(s) are screenshots of the statement or banking app.\n` : ''}${text.trim() ? `Statement text:\n"""\n${text}\n"""` : ''}`;
+  claudeCtl = new AbortController();
+  btn.textContent = 'Stop';
+  status.className = 'status';
+  status.textContent = 'Claude is reading your statement. This can take up to a minute…';
+  try {
+    const opts = { signal: claudeCtl.signal };
+    if (imgs.length) opts.images = imgs;
+    const res = await sampleFn.json(prompt, opts);
+    const arr = Array.isArray(res) ? res : [];
+    const found = [];
+    for (const r of arr) {
+      if (!r || typeof r.name !== 'string' || !r.name.trim()) continue;
+      const price = Math.abs(Number(r.amount)) || 0;
+      const cycle = CYCLES[r.cycle] ? r.cycle : 'monthly';
+      const svc = dirByName(r.name) || matchService(r.name);
+      const lastD = fromISO(r.lastDate);
+      let next = '';
+      if (lastD) { let d = addCycle(lastD, cycle), k = 1; while (d < today() && k < 400) { k++; d = addCycle(lastD, cycle, k); } next = toISO(d); }
+      const via = BILLERS[r.billedVia] && r.billedVia !== 'other' ? r.billedVia : (svc ? svc.via : 'direct');
+      found.push({ name: svc && svc.id !== 'apple-subs' ? svc.name : r.name.trim().slice(0, 60), serviceId: svc ? svc.id : null, price, cycle, nextDate: next, via, lastDate: lastD ? toISO(lastD) : '', confidence: 'claude', descriptor: String(r.descriptor || '').slice(0, 80), checked: true });
+    }
+    state.candidates = found;
+    status.textContent = found.length ? '' : "Claude didn't find any subscriptions in that statement.";
+    renderCandidates(found.length ? `Claude found ${found.length} possible subscription${found.length === 1 ? '' : 's'}` : '');
+  } catch (e) {
+    const code = e && e.code;
+    status.className = code === 'cancelled' ? 'status' : 'status err';
+    status.textContent = ({
+      cancelled: 'Stopped.',
+      not_granted: 'Claude wasn\'t allowed to read it. "Scan on this phone" still works.',
+      sampling_disabled: 'Claude isn\'t available on this account. "Scan on this phone" still works.',
+      rate_limited: 'Claude is busy or you have reached a usage limit. Try again in a little while.',
+      prompt_too_large: 'That statement is too long. Try one month at a time.',
+      image_rejected: 'One of the images couldn\'t be read. Try a clearer screenshot.',
+      invalid_json: 'Claude\'s answer came back garbled. Tap Ask Claude again.',
+      refused: 'Claude couldn\'t help with that file. Try "Scan on this phone".',
+    })[code] || 'Something went wrong reaching Claude. Try again.';
+    if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(code)) { sampleFn = null; btn.hidden = true; updatePrivacy(); }
+  } finally {
+    claudeCtl = null;
+    btn.textContent = 'Ask Claude to read it';
+  }
+}
+async function connectSample() {
+  const C = window.claude;
+  if (!C || typeof C.use !== 'function') return;
+  try { sampleFn = await C.use('sample'); } catch { sampleFn = null; }
+  if (sampleFn) { $('#st-claude').hidden = false; updatePrivacy(); }
+}
+
+/* ---------- sample statement for trying it ---------- */
+function sampleStatement() {
+  const t = today();
+  const d = n => { const x = new Date(t.getTime() - n * DAY); return `${pad(x.getMonth() + 1)}/${pad(x.getDate())}/${x.getFullYear()}`; };
+  return [
+    `${d(2)}   NETFLIX.COM 866-579-7172 CA          -17.99`,
+    `${d(3)}   TRADER JOE'S #552                    -64.12`,
+    `${d(5)}   SPOTIFY USA 877-778-1161             -11.99`,
+    `${d(6)}   APPLE.COM/BILL 866-712-7753 CA        -2.99`,
+    `${d(8)}   PAYROLL DEPOSIT ACME CORP          +2,450.00`,
+    `${d(9)}   SHELL OIL 57444                      -48.30`,
+    `${d(11)}   GOOGLE *YouTubePremium               -13.99`,
+    `${d(14)}   CITY BLOCK FITNESS                   -29.00`,
+    `${d(17)}   PAYPAL *HULU                         -11.99`,
+    `${d(20)}   APPLE.COM/BILL 866-712-7753 CA       -10.99`,
+    `${d(44)}   CITY BLOCK FITNESS                   -29.00`,
+    `${d(75)}   CITY BLOCK FITNESS                   -29.00`,
+  ].join('\n');
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act],[data-tab],[data-sort]');
+  if (!el) return;
+  if (el.dataset.tab) { setTab(el.dataset.tab); return; }
+  if (el.dataset.sort) { state.sort = el.dataset.sort; lsSet(UI_KEY, { tab: state.tab, sort: state.sort }); render(); return; }
+  const id = el.dataset.id;
+  switch (el.dataset.act) {
+    case 'close': closeSheet(); break;
+    case 'add': openForm(); break;
+    case 'go-find': setTab('find'); break;
+    case 'cancel': openCancel(id); break;
+    case 'edit': openForm({ id }); break;
+    case 'mark-cancelled': {
+      const s = state.subs.find(x => x.id === id);
+      closeSheet();
+      if (s) { await putSub({ ...s, status: 'cancelled', cancelledOn: toISO(today()) }); toast(`${s.name} marked as cancelled`); }
+      break;
+    }
+    case 'restore': {
+      const s = state.subs.find(x => x.id === id);
+      closeSheet();
+      if (s) { await putSub({ ...s, status: 'active', cancelledOn: '' }); toast(`${s.name} is back in your active list`); }
+      break;
+    }
+    case 'clear-examples': {
+      const ex = state.subs.filter(s => s.example);
+      for (const s of ex) await removeSub(s.id);
+      toast('Examples removed');
+      break;
+    }
+    case 'dir-add': {
+      const svc = DIR_BY_ID[el.dataset.svc];
+      if (svc) openForm({ prefill: { name: svc.name, serviceId: svc.id, cycle: svc.cycle, via: svc.via } });
+      break;
+    }
+    case 'dir-more': state.dirAll = true; renderDir(); break;
+    case 'sample':
+      $('#st-text').value = sampleStatement();
+      toast('Sample statement filled in');
+      break;
+    case 'rm-file':
+      state.files.splice(+el.dataset.i, 1);
+      renderFiles();
+      break;
+    case 'add-cands': {
+      const pick = state.candidates.filter(c => c.checked !== false && !inList(c.name, c.serviceId, c.price));
+      el.disabled = true;
+      for (const c of pick) {
+        await putSub({ id: newId(), name: c.name, serviceId: c.serviceId, price: c.price, cycle: c.cycle, nextDate: c.nextDate, via: c.via, notes: c.descriptor ? `Shows on statement as ${c.descriptor}` : '', status: 'active' });
+      }
+      toast(`Added ${pick.length} to your list`);
+      renderCandidates();
+      break;
+    }
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('[data-cand]')) { state.candidates[+t.dataset.cand].checked = t.checked; renderCandidates(); }
+});
+$('#btn-add').addEventListener('click', () => openForm());
+$('#st-scan').addEventListener('click', scanLocal);
+$('#st-claude').addEventListener('click', scanWithClaude);
+$('#st-file').addEventListener('change', async e => { const files = [...e.target.files]; e.target.value = ''; await readFiles(files); });
+$('#dir-search').addEventListener('input', renderDir);
+$('#set-cur').addEventListener('change', e => { state.prefs.currency = e.target.value; render(); savePrefs(); });
+
+document.getElementById('dir-names').innerHTML = DIRECTORY.filter(s => s.id !== 'apple-subs').map(s => `<option value="${esc(s.name)}"></option>`).join('');
+
+/* ---------- boot ---------- */
+render();
+setTab(state.tab);
+connectStore();
+connectSample();
+
+// exposed for testing outside the viewer
+window.__sweep = { parseStatement, detect, sampleStatement };
+})();
+</script>
