@@ -1,6 +1,6 @@
 # Subscription Sweep
 
-A phone-sized web app that finds the subscriptions you pay for and helps you cancel the ones you don't want.
+A phone-sized web app that finds the subscriptions you pay for and helps you cancel the ones you don't want, with a Fire Force-inspired look: subscriptions are fires on your log, and cancelling one extinguishes it.
 
 The app is one file: [`app/subscription-sweep.html`](app/subscription-sweep.html).
 

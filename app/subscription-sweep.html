@@ -3,95 +3,60 @@
 <meta name="description" content="Find every subscription you pay for and cancel the ones you don't want.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800;1,900&family=Barlow:wght@400;500;600;700&family=Dela+Gothic+One&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: a bank statement you can act on. Ruled ledger rows, one highlighted yearly total, a red pen for cancelling. */
+/* Layout: a fire log on a turnout coat. Soot-black panels banded with reflective tape, spending burns orange, savings run cool as water. One committed dark look. */
 :root {
-  --paper: #EEF1F5;
-  --sheet: #FFFFFF;
-  --ink: #0F1A2E;
-  --muted: #586378;
-  --rule: #D9DFE8;
-  --accent: #1D4ED8;
-  --accent-ink: #FFFFFF;
-  --accent-soft: rgba(29, 78, 216, .09);
-  --mark: rgba(255, 219, 40, .78);
-  --cut: #C42F25;
-  --cut-soft: rgba(196, 47, 37, .08);
-  --ok: #14774B;
-  --ok-soft: rgba(20, 119, 75, .1);
-  --warn: #9A5B00;
-  --warn-soft: rgba(214, 140, 0, .14);
-  --tile-s: 58%;
-  --tile-l: 42%;
-  --tile-fg: #FFFFFF;
-  --scrim: rgba(12, 20, 36, .48);
-  --shadow: 0 1px 2px rgba(15, 26, 46, .06), 0 10px 30px rgba(15, 26, 46, .07);
+  --paper: #0D0A09;        /* soot */
+  --sheet: #181210;        /* turnout coat */
+  --well: #110D0B;         /* inputs, wells */
+  --ink: #F6EEE5;          /* ash white */
+  --muted: #A99A8D;        /* smoke */
+  --rule: #33271F;
+  --accent: #FF6B1A;       /* flame */
+  --accent-ink: #170C06;
+  --accent-soft: rgba(255, 107, 26, .13);
+  --hot: #FFC63D;          /* flame tip */
+  --mark: rgba(255, 150, 20, .34);
+  --cut: #F2402A;          /* fire-alarm red */
+  --cut-soft: rgba(242, 64, 42, .14);
+  --ok: #62C6F0;           /* water: what you saved */
+  --ok-soft: rgba(98, 198, 240, .13);
+  --warn: #FFC63D;
+  --warn-soft: rgba(255, 198, 61, .13);
+  --tape-y: #D6EE3A;       /* reflective tape */
+  --tape-s: #BFC6CC;
+  --tape: linear-gradient(to bottom, var(--tape-y) 0 28%, var(--tape-s) 28% 72%, var(--tape-y) 72% 100%);
+  --flame: linear-gradient(90deg, var(--cut) 0%, var(--accent) 55%, var(--hot) 100%);
+  --tile-s: 52%;
+  --tile-l: 33%;
+  --tile-fg: #FFF4E8;
+  --scrim: rgba(0, 0, 0, .72);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 14px 40px rgba(0, 0, 0, .45);
+  --glow: 0 0 0 1px rgba(255, 107, 26, .25), 0 10px 40px rgba(255, 80, 20, .16);
 
-  --display: "Archivo", "Arial Narrow", "Helvetica Neue", system-ui, sans-serif;
-  --body: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --kanji: "Dela Gothic One", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
 
-  --r: 14px;
+  --r: 8px;
   --nav-h: 64px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #0C111C;
-    --sheet: #151C2B;
-    --ink: #E7EBF3;
-    --muted: #98A2B6;
-    --rule: #263046;
-    --accent: #86A6FF;
-    --accent-ink: #0C111C;
-    --accent-soft: rgba(134, 166, 255, .13);
-    --mark: rgba(255, 214, 10, .32);
-    --cut: #FF7A6E;
-    --cut-soft: rgba(255, 122, 110, .12);
-    --ok: #4CCB8E;
-    --ok-soft: rgba(76, 203, 142, .13);
-    --warn: #F2B544;
-    --warn-soft: rgba(242, 181, 68, .14);
-    --tile-s: 45%;
-    --tile-l: 58%;
-    --tile-fg: #0C111C;
-    --scrim: rgba(0, 0, 0, .6);
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #0C111C;
-  --sheet: #151C2B;
-  --ink: #E7EBF3;
-  --muted: #98A2B6;
-  --rule: #263046;
-  --accent: #86A6FF;
-  --accent-ink: #0C111C;
-  --accent-soft: rgba(134, 166, 255, .13);
-  --mark: rgba(255, 214, 10, .32);
-  --cut: #FF7A6E;
-  --cut-soft: rgba(255, 122, 110, .12);
-  --ok: #4CCB8E;
-  --ok-soft: rgba(76, 203, 142, .13);
-  --warn: #F2B544;
-  --warn-soft: rgba(242, 181, 68, .14);
-  --tile-s: 45%;
-  --tile-l: 58%;
-  --tile-fg: #0C111C;
-  --scrim: rgba(0, 0, 0, .6);
-  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
   color-scheme: dark;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 body {
-  background: var(--paper);
+  background:
+    radial-gradient(120% 55% at 50% -12%, rgba(255, 90, 20, .2), transparent 62%),
+    var(--paper);
+  background-color: var(--paper);
   color: var(--ink);
   font-family: var(--body);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  min-height: 100%;
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 24px);
 }
 body::before {
@@ -104,7 +69,7 @@ body::before {
 }
 a { color: var(--accent); }
 button, input, select, textarea { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--hot); outline-offset: 2px; border-radius: 4px; }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .wrap {
   max-width: 560px;
@@ -121,22 +86,23 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--paper);
   border-bottom: 1px solid var(--rule);
 }
-.topbar .wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-block: 12px;
-}
-.brand { display: flex; align-items: center; gap: 9px; min-width: 0; margin-right: auto; }
+.topbar .wrap { display: flex; align-items: center; gap: 10px; padding-block: 10px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; }
 .brand svg { flex: none; }
+.brand-text { display: grid; line-height: 1.05; min-width: 0; }
 .brand-name {
   font-family: var(--display);
-  font-stretch: 118%;
+  font-style: italic;
   font-weight: 800;
-  font-size: 17px;
-  letter-spacing: -.01em;
+  font-size: clamp(17px, 5.2vw, 21px);
+  text-transform: uppercase;
+  letter-spacing: .01em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 2px;
 }
+.brand-sub { font-family: var(--kanji); font-size: 10.5px; color: var(--accent); letter-spacing: .12em; white-space: nowrap; }
 .sync {
   font-family: var(--mono);
   font-size: 11px;
@@ -149,62 +115,101 @@ button, input, select, textarea { font: inherit; color: inherit; }
   white-space: nowrap;
 }
 .sync::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
-.sync[data-state="db"]::before { background: var(--ok); }
+.sync[data-state="db"]::before { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
 .sync[data-state="syncing"]::before { background: var(--warn); }
 .sync[data-state="offline"]::before { background: var(--cut); }
-.btn-add {
-  display: inline-flex; align-items: center; gap: 6px;
-  border: 0; border-radius: 999px;
-  background: var(--accent); color: var(--accent-ink);
-  font-weight: 700; font-size: 14px;
-  padding: 8px 14px 8px 11px;
-  cursor: pointer;
+
+/* Slanted action buttons, like the stripe on an engine */
+.btn-add, .btn-primary, .btn-cut, .btn-ok {
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  border-radius: 0 !important;
+  padding-inline: 22px !important;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-family: var(--display) !important;
+  font-style: italic;
+  font-weight: 800 !important;
+  font-size: 17px !important;
 }
+.btn-add, .btn-primary, .btn-cut, .btn-ok, .btn-quiet, .btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-weight: 700; font-size: 15px;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  line-height: 1.2;
+  border-radius: 6px;
+}
+.btn-add, .btn-primary { background: var(--flame); color: var(--accent-ink); }
+.btn-add { padding-block: 9px; padding-inline: 18px !important; flex: none; }
+.btn-cut { background: var(--cut); color: var(--ink); }
+.btn-ok { background: var(--ok); color: var(--accent-ink); }
+.btn-quiet { border-color: var(--rule); color: var(--ink); background: transparent; }
+.btn-secondary { border-color: var(--accent); color: var(--accent); background: transparent; }
+.btn-add:focus-visible, .btn-primary:focus-visible, .btn-cut:focus-visible, .btn-ok:focus-visible { outline: 2px solid var(--ink); outline-offset: -6px; }
+.btn-block { width: 100%; padding-block: 12px; }
+button:disabled { opacity: .45; cursor: default; }
+.btn-primary:not(:disabled):active, .btn-cut:active, .btn-add:active { filter: brightness(1.15); }
 
 main { display: block; }
-.view { display: grid; gap: 18px; padding-block: 18px; }
+.view { display: grid; gap: 20px; padding-block: 18px; }
 
-/* Statement summary */
+/* Fire load card */
 .hero {
   background: var(--sheet);
   border: 1px solid var(--rule);
   border-radius: var(--r);
-  box-shadow: var(--shadow);
-  padding: 18px 18px 16px;
+  box-shadow: var(--glow);
+  padding: 18px 18px 0;
   display: grid;
   gap: 6px;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
 }
-.hero::after {
-  content: "";
-  position: absolute; left: 0; right: 0; bottom: 0; height: 6px;
-  background: repeating-linear-gradient(90deg, var(--rule) 0 8px, transparent 8px 14px);
+#embers { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.kanji-mark {
+  position: absolute;
+  right: -14px; top: -34px;
+  font-family: var(--kanji);
+  font-size: 170px;
+  line-height: 1;
+  color: rgba(255, 107, 26, .09);
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
 }
+.hero > :not(#embers):not(.kanji-mark) { position: relative; z-index: 1; }
+.hero-top { display: flex; align-items: center; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; }
 .eyebrow {
   font-family: var(--mono);
   font-size: 11px;
-  letter-spacing: .08em;
+  letter-spacing: .1em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--accent);
 }
-.hero-top { display: flex; align-items: center; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; }
 .hero-amount { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .hero-amount .big {
   font-family: var(--display);
-  font-stretch: 112%;
-  font-weight: 800;
-  font-size: clamp(38px, 11vw, 52px);
-  line-height: 1.02;
-  letter-spacing: -.02em;
+  font-style: italic;
+  font-weight: 900;
+  font-size: clamp(52px, 16vw, 72px);
+  line-height: .95;
+  letter-spacing: -.01em;
   font-variant-numeric: tabular-nums;
+  padding-right: .08em;
+  background: linear-gradient(180deg, var(--hot) 8%, var(--accent) 58%, var(--cut) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
-.hero-amount .per { color: var(--muted); font-weight: 600; }
-.hero-year { margin: 0; font-size: 16px; }
+.hero-amount .per { color: var(--muted); font-family: var(--display); font-style: italic; font-weight: 700; font-size: 20px; text-transform: uppercase; }
+.hero-year { margin: 0; font-size: 17px; }
 .hero-year mark {
-  background: linear-gradient(transparent 18%, var(--mark) 18%, var(--mark) 88%, transparent 88%);
-  color: inherit;
-  padding: 0 3px;
+  background: linear-gradient(transparent 55%, var(--mark) 55%, var(--mark) 92%, transparent 92%);
+  color: var(--hot);
+  padding: 0 2px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -212,16 +217,16 @@ main { display: block; }
   margin-top: 6px;
   padding-top: 10px;
   border-top: 1px dashed var(--rule);
-  font-size: 14px;
+  font-size: 15px;
   color: var(--muted);
-  padding-bottom: 6px;
 }
 .hero-next strong { color: var(--ink); }
-.saved {
-  font-size: 14px;
-  color: var(--ok);
-  font-weight: 600;
-  padding-bottom: 6px;
+.saved { font-size: 15px; color: var(--ok); font-weight: 600; }
+.tape { height: 14px; background: var(--tape); position: relative; margin: 12px -18px 0; }
+.tape::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .45) 32%, transparent 44%, transparent 70%, rgba(255, 255, 255, .3) 78%, transparent 86%);
 }
 
 /* Banner */
@@ -231,31 +236,33 @@ main { display: block; }
   border: 1px solid var(--rule);
   border-radius: var(--r);
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 15px;
 }
 .banner p { margin: 0; flex: 1 1 220px; min-width: 0; }
 
 /* Section heads */
 .sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.sec-head h2, .panel h2 {
+.sec-head h2, .panel h2, details.cancelled > summary h2 {
   margin: 0;
   font-family: var(--display);
-  font-stretch: 108%;
-  font-weight: 750;
-  font-size: 19px;
-  letter-spacing: -.01em;
+  font-style: italic;
+  font-weight: 800;
+  font-size: 25px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: .01em;
   text-wrap: balance;
 }
-.count { font-family: var(--mono); font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 6px; }
-.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 2px; background: var(--sheet); }
+.count { font-family: var(--mono); font-style: normal; font-size: 13px; color: var(--accent); font-weight: 500; margin-left: 8px; vertical-align: 3px; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; padding: 2px; background: var(--well); }
 .seg button {
-  border: 0; background: transparent; border-radius: 999px;
-  font-size: 13px; font-weight: 600; color: var(--muted);
+  border: 0; background: transparent; border-radius: 4px;
+  font-size: 14px; font-weight: 600; color: var(--muted);
   padding: 5px 11px; cursor: pointer;
 }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
 
-/* Ledger list */
+/* Fire log list */
 .ledger {
   list-style: none; margin: 0; padding: 0;
   background: var(--sheet);
@@ -266,29 +273,30 @@ main { display: block; }
 .ledger > li + li { border-top: 1px solid var(--rule); }
 .row {
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
   gap: 4px 12px;
   padding: 14px;
   align-items: start;
 }
 .tile {
-  width: 40px; height: 40px; border-radius: 10px;
+  width: 42px; height: 42px; border-radius: 6px;
   display: grid; place-items: center;
-  background: hsl(var(--h, 220) var(--tile-s) var(--tile-l));
+  background: hsl(var(--h, 20) var(--tile-s) var(--tile-l));
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .08);
   color: var(--tile-fg);
   font-family: var(--display);
-  font-stretch: 100%;
+  font-style: italic;
   font-weight: 800;
-  font-size: 16px;
-  letter-spacing: -.02em;
+  font-size: 19px;
 }
 .row-main { min-width: 0; display: grid; gap: 2px; }
-.row-name { font-weight: 700; font-size: 16px; overflow-wrap: anywhere; }
-.row-meta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.row-name { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; }
+.row-meta { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
 .row-meta.mono { font-size: 12px; }
-.row-amt { text-align: right; white-space: nowrap; font-weight: 600; font-size: 16px; }
+.row-amt { text-align: right; white-space: nowrap; font-weight: 600; font-size: 16px; color: var(--hot); }
 .row-amt small { display: block; font-size: 11px; color: var(--muted); font-weight: 500; }
-.row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.row-actions { grid-column: 2 / -1; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.row-actions .btn-cut { font-size: 15px !important; padding-block: 7px; }
 .chips { display: inline-flex; gap: 6px; flex-wrap: wrap; vertical-align: middle; }
 .chip {
   display: inline-block;
@@ -296,7 +304,7 @@ main { display: block; }
   font-size: 10.5px;
   letter-spacing: .05em;
   text-transform: uppercase;
-  border-radius: 5px;
+  border-radius: 3px;
   padding: 1px 6px;
   background: var(--accent-soft);
   color: var(--accent);
@@ -306,32 +314,16 @@ main { display: block; }
 .chip.ex { background: var(--rule); color: var(--muted); }
 .chip.done { background: var(--ok-soft); color: var(--ok); }
 
-.btn-cut, .btn-quiet, .btn-primary, .btn-secondary, .btn-ok {
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  border-radius: 999px;
-  font-weight: 700; font-size: 14px;
-  padding: 8px 14px;
-  cursor: pointer;
-  text-decoration: none;
-  border: 1.5px solid transparent;
-  line-height: 1.2;
-}
-.btn-cut { border-color: var(--cut); color: var(--cut); background: var(--cut-soft); }
-.btn-quiet { border-color: var(--rule); color: var(--ink); background: transparent; }
-.btn-primary { background: var(--accent); color: var(--accent-ink); }
-.btn-secondary { border-color: var(--accent); color: var(--accent); background: transparent; }
-.btn-ok { background: var(--ok); color: var(--sheet); }
-.btn-block { width: 100%; padding: 12px 16px; font-size: 15px; }
-button:disabled { opacity: .5; cursor: default; }
-
 .empty {
   background: var(--sheet);
   border: 1px dashed var(--rule);
   border-radius: var(--r);
   padding: 22px 18px;
   display: grid; gap: 10px;
+  position: relative;
+  overflow: hidden;
 }
-.empty h3 { margin: 0; font-family: var(--display); font-stretch: 108%; font-weight: 750; font-size: 18px; }
+.empty h3 { margin: 0; font-family: var(--display); font-style: italic; font-weight: 800; font-size: 23px; text-transform: uppercase; }
 .empty p { margin: 0; color: var(--muted); }
 
 details.cancelled > summary {
@@ -341,14 +333,15 @@ details.cancelled > summary {
   padding: 4px 0;
 }
 details.cancelled > summary::-webkit-details-marker { display: none; }
-details.cancelled > summary h2 { margin: 0; font-family: var(--display); font-stretch: 108%; font-weight: 750; font-size: 19px; }
+details.cancelled > summary h2 { color: var(--ok); }
 details.cancelled > summary .arrow { transition: transform .2s; color: var(--muted); }
 details.cancelled[open] > summary .arrow { transform: rotate(180deg); }
 details.cancelled .ledger { margin-top: 10px; }
-.row.is-cancelled .row-name { text-decoration: line-through; text-decoration-color: var(--cut); text-decoration-thickness: 2px; }
+.row.is-cancelled .row-name { text-decoration: line-through; text-decoration-color: var(--ok); text-decoration-thickness: 2px; }
 .row.is-cancelled .row-amt { color: var(--muted); }
+.row.is-cancelled .tile { filter: grayscale(1) brightness(.8); }
 
-/* Panels on the Find view */
+/* Investigate view */
 .panel {
   background: var(--sheet);
   border: 1px solid var(--rule);
@@ -359,35 +352,37 @@ details.cancelled .ledger { margin-top: 10px; }
 }
 .panel p { margin: 0; }
 .panel .lede { color: var(--muted); }
+.panel-k { font-family: var(--kanji); font-size: 12px; color: var(--accent); letter-spacing: .14em; }
 .store-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
 .store {
   display: grid; gap: 2px;
   text-decoration: none;
-  border: 1.5px solid var(--ink);
-  border-radius: 12px;
+  border: 1.5px solid var(--rule);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
   padding: 12px 14px;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--well);
 }
+.store:hover { border-color: var(--accent); }
 .store-k { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.store-v { font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.links-row { display: flex; gap: 8px 16px; flex-wrap: wrap; font-size: 14px; font-weight: 600; }
-.fine { font-size: 13px; color: var(--muted); }
+.store-v { font-weight: 700; font-size: 17px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.links-row { display: flex; gap: 8px 16px; flex-wrap: wrap; font-size: 15px; font-weight: 600; }
+.fine { font-size: 14px; color: var(--muted); }
 
 .field { display: grid; gap: 6px; }
-.field > label, .lbl { font-weight: 600; font-size: 14px; }
-.field .help { font-size: 12.5px; color: var(--muted); }
+.field > label, .lbl { font-weight: 600; font-size: 15px; }
 input[type="text"], input[type="number"], input[type="date"], input[type="search"], input[type="url"], select, textarea {
   width: 100%;
   min-width: 0;
   border: 1.5px solid var(--rule);
-  border-radius: 10px;
-  background: var(--paper);
+  border-radius: 6px;
+  background: var(--well);
   padding: 10px 12px;
   font-size: 16px;
 }
 textarea { font-family: var(--mono); font-size: 13.5px; line-height: 1.45; resize: vertical; white-space: pre; overflow-x: auto; }
-input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .grid-2 > * { min-width: 0; }
 @media (max-width: 360px) { .grid-2 { grid-template-columns: 1fr; } }
@@ -397,7 +392,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); outline
   border: 1.5px dashed var(--accent);
   color: var(--accent);
   background: var(--accent-soft);
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -408,26 +403,26 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); outline
 .filelist .chip { text-transform: none; letter-spacing: 0; font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .btn-row > * { flex: 1 1 160px; }
-.textlink { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; font-size: 14px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
-.status { font-size: 14px; color: var(--muted); min-height: 0; }
+.textlink { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
+.status { font-size: 15px; color: var(--muted); }
 .status:empty { display: none; }
 .status.err { color: var(--cut); }
 
-.cand { display: grid; grid-template-columns: 24px 40px minmax(0, 1fr) auto; gap: 4px 10px; padding: 12px 14px; align-items: start; cursor: pointer; }
-.cand input[type="checkbox"] { width: 20px; height: 20px; margin: 10px 0 0; accent-color: var(--accent); }
-.cand.is-dupe { opacity: .55; cursor: default; }
+.cand { display: grid; grid-template-columns: 24px 42px minmax(0, 1fr) auto; gap: 4px 10px; padding: 12px 14px; align-items: start; cursor: pointer; }
+.cand input[type="checkbox"] { width: 20px; height: 20px; margin: 11px 0 0; accent-color: var(--accent); }
+.cand.is-dupe { opacity: .5; cursor: default; }
 .results { display: grid; gap: 12px; }
-.results h3 { margin: 0; font-family: var(--display); font-stretch: 108%; font-weight: 750; font-size: 17px; }
+.results h3 { margin: 0; font-family: var(--display); font-style: italic; font-weight: 800; font-size: 21px; text-transform: uppercase; color: var(--hot); }
 
-.dir .row { grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; padding: 10px 14px; }
+.dir .row { grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; padding: 10px 14px; }
 
-/* Bottom tab bar */
+/* Bottom tab bar, banded with tape */
 .tabbar {
   position: fixed;
   left: 0; right: 0; bottom: 0;
   z-index: 9;
-  background: var(--sheet);
-  border-top: 1px solid var(--rule);
+  background: var(--tape) top / 100% 5px no-repeat, var(--sheet);
+  padding-top: 5px;
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .tabbar .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: var(--nav-h); align-items: center; }
@@ -435,13 +430,17 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); outline
   border: 0; background: transparent; cursor: pointer;
   display: grid; justify-items: center; gap: 2px;
   color: var(--muted);
-  font-size: 12px; font-weight: 600;
+  font-family: var(--display);
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 15px; font-weight: 700;
   padding: 6px 0;
-  border-radius: 10px;
+  border-radius: 6px;
 }
 .tab svg { width: 22px; height: 22px; }
 .tab[aria-selected="true"] { color: var(--accent); }
-.tab .badge { font-family: var(--mono); font-size: 10px; }
+.tab .badge { font-family: var(--mono); font-style: normal; font-size: 10px; }
 
 /* Bottom sheet */
 dialog.sheet {
@@ -452,52 +451,51 @@ dialog.sheet {
   max-width: 560px;
   max-height: 92vh;
   max-height: 92dvh;
-  border-radius: 20px 20px 0 0;
-  background: var(--sheet);
+  border-radius: 14px 14px 0 0;
+  background: var(--tape) top / 100% 8px no-repeat, var(--sheet);
   color: var(--ink);
   box-shadow: var(--shadow);
   overflow: auto;
   overscroll-behavior: contain;
 }
 dialog.sheet::backdrop { background: var(--scrim); }
-@media (min-width: 640px) {
-  dialog.sheet { margin: auto; border-radius: 20px; }
-}
+@media (min-width: 640px) { dialog.sheet { margin: auto; border-radius: 14px; } }
 .sheet-inner {
   display: grid; gap: 14px;
-  padding: 10px max(18px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+  padding: 18px max(18px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
 }
 .grabber { width: 40px; height: 4px; border-radius: 4px; background: var(--rule); justify-self: center; }
 .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.sheet-head h2 { margin: 0; font-family: var(--display); font-stretch: 110%; font-weight: 800; font-size: 22px; letter-spacing: -.01em; text-wrap: balance; }
-.x { border: 0; background: var(--paper); border-radius: 999px; width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; flex: none; }
-.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: s; }
-.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; align-items: start; counter-increment: s; }
+.sheet-head h2 { margin: 0; font-family: var(--display); font-style: italic; font-weight: 900; font-size: 30px; line-height: 1.05; text-transform: uppercase; text-wrap: balance; }
+.x { border: 0; background: var(--well); border-radius: 6px; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; flex: none; }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; counter-increment: s; }
 .steps li::before {
   content: counter(s);
-  width: 26px; height: 26px; border-radius: 50%;
+  width: 28px; height: 28px; border-radius: 50%;
   display: grid; place-items: center;
-  border: 1.5px solid var(--ink);
-  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--display); font-style: italic; font-size: 17px; font-weight: 800;
 }
 .steps li > div { display: grid; gap: 8px; min-width: 0; }
-.note { font-size: 14px; background: var(--warn-soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; }
-.err-text { color: var(--cut); font-size: 13.5px; }
+.note { font-size: 15px; background: var(--warn-soft); color: var(--ink); border-left: 3px solid var(--warn); border-radius: 4px; padding: 10px 12px; }
+.err-text { color: var(--cut); font-size: 14px; }
 .err-text:empty { display: none; }
 
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
   transform: translateX(-50%) translateY(10px);
   opacity: 0;
   pointer-events: none;
   background: var(--ink);
   color: var(--paper);
-  padding: 10px 16px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 14px;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 15px;
   transition: opacity .2s, transform .2s;
   z-index: 20;
   max-width: calc(100% - 32px);
@@ -513,18 +511,17 @@ dialog.sheet::backdrop { background: var(--scrim); }
 <header class="topbar">
   <div class="wrap">
     <div class="brand">
-      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-        <rect x="3" y="2" width="20" height="22" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
-        <line x1="7.5" y1="8" x2="18.5" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <line x1="7.5" y1="13" x2="18.5" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
-        <line x1="7.5" y1="18" x2="15" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
-        <line x1="5" y1="15.5" x2="21" y2="10.5" stroke="var(--cut)" stroke-width="2.4" stroke-linecap="round"/>
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <defs><linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#F2402A"/><stop offset=".55" stop-color="#FF6B1A"/><stop offset="1" stop-color="#FFC63D"/></linearGradient></defs>
+        <circle cx="17" cy="17" r="15.5" fill="#181210" stroke="#D6EE3A" stroke-width="1.6"/>
+        <circle cx="17" cy="17" r="12.6" fill="none" stroke="#BFC6CC" stroke-width=".8" opacity=".55"/>
+        <path d="M17 6.5c1.4 3.5 6.2 6.2 6.2 11.4A6.2 6.2 0 0 1 17 24.3a6.2 6.2 0 0 1-6.2-6.4c0-2.7 1.6-4.4 2.8-5.7.2 1.8 1 3 2.2 3.6-.4-3.8.4-6.8 1.2-9.3z" fill="url(#fl)"/>
+        <path d="M17 15.5c.6 1.5 2.6 2.7 2.6 4.9a2.6 2.6 0 0 1-5.2 0c0-1.2.7-1.9 1.2-2.4.1.8.5 1.3 1 1.5-.2-1.6.1-2.9.4-4z" fill="#FFE9A8"/>
       </svg>
-      <span class="brand-name">Subscription Sweep</span>
+      <span class="brand-text"><span class="brand-name">Subscription Sweep</span><span class="brand-sub">特殊消防隊 · COMPANY 8</span></span>
     </div>
     <button class="btn-add" id="btn-add" type="button" aria-label="Add a subscription">
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-      Add
+      Report
     </button>
   </div>
 </header>
@@ -533,11 +530,14 @@ dialog.sheet::backdrop { background: var(--scrim); }
   <!-- My list -->
   <section class="wrap view" id="view-mine" aria-label="My subscriptions">
     <div class="hero" aria-live="polite">
+      <canvas id="embers" aria-hidden="true"></canvas>
+      <span class="kanji-mark" aria-hidden="true">炎</span>
       <div class="hero-top"><span class="eyebrow" id="h-eyebrow">Statement</span><span class="sync" id="sync" data-state="local">On this phone</span></div>
-      <div class="hero-amount"><span class="big" id="h-month">$0.00</span><span class="per">a month</span></div>
-      <p class="hero-year">That's <mark id="h-year">$0.00 a year</mark> on <span id="h-count">0 subscriptions</span>.</p>
+      <div class="hero-amount"><span class="big" id="h-month">$0.00</span><span class="per">burning a month</span></div>
+      <p class="hero-year">That's <mark id="h-year">$0.00 a year</mark> going up in smoke on <span id="h-count">0 subscriptions</span>.</p>
       <div class="hero-next" id="h-next">Add your subscriptions to see what's due next.</div>
       <div class="saved" id="h-saved" hidden></div>
+      <div class="tape" aria-hidden="true"></div>
     </div>
 
     <div class="banner" id="ex-banner" hidden>
@@ -547,34 +547,35 @@ dialog.sheet::backdrop { background: var(--scrim); }
 
     <div id="active-wrap">
       <div class="sec-head" style="margin-bottom:10px">
-        <h2>Active<span class="count" id="active-count"></span></h2>
+        <h2>Active fires<span class="count" id="active-count"></span></h2>
         <div class="seg" role="group" aria-label="Sort by">
-          <button type="button" data-sort="next" aria-pressed="true">Next charge</button>
-          <button type="button" data-sort="price" aria-pressed="false">Cost</button>
+          <button type="button" data-sort="next" aria-pressed="true">Next flare-up</button>
+          <button type="button" data-sort="price" aria-pressed="false">Biggest</button>
         </div>
       </div>
       <ul class="ledger" id="active-list"></ul>
     </div>
 
     <div class="empty" id="empty" hidden>
-      <h3>Your list is empty</h3>
-      <p>Start with Find. It checks your phone's app store, scans a bank statement, or lets you tick off popular services you pay for.</p>
+      <span class="panel-k" aria-hidden="true">出動</span>
+      <h3>No fires on the log yet</h3>
+      <p>Start an investigation. It checks your phone's app store, scans a bank statement, or lets you tick off popular services you pay for.</p>
       <div class="btn-row">
-        <button class="btn-primary" type="button" data-act="go-find">Find my subscriptions</button>
-        <button class="btn-quiet" type="button" data-act="add">Add one by hand</button>
+        <button class="btn-primary" type="button" data-act="go-find">Start investigating</button>
+        <button class="btn-quiet" type="button" data-act="add">Report one by hand</button>
       </div>
     </div>
 
     <details class="cancelled" id="cancelled-wrap" hidden>
       <summary>
-        <h2>Cancelled<span class="count" id="cancelled-count"></span></h2>
+        <h2>Extinguished<span class="count" id="cancelled-count"></span></h2>
         <svg class="arrow" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 7l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </summary>
       <ul class="ledger" id="cancelled-list"></ul>
     </details>
 
     <section class="panel" aria-labelledby="set-h">
-      <h2 id="set-h">Settings</h2>
+      <h2 id="set-h">Station settings</h2>
       <div class="field">
         <label for="set-cur">Currency</label>
         <select id="set-cur"></select>
@@ -586,7 +587,8 @@ dialog.sheet::backdrop { background: var(--scrim); }
   <!-- Find -->
   <section class="wrap view" id="view-find" aria-label="Find subscriptions" hidden>
     <section class="panel" aria-labelledby="f1">
-      <h2 id="f1">Billed through your phone</h2>
+      <span class="panel-k" aria-hidden="true">調査 · 一</span>
+      <h2 id="f1">Check your phone first</h2>
       <p class="lede">Your phone's app store keeps one list of every subscription you pay for through it, and you can cancel any of them from there. Check this first.</p>
       <div class="store-grid">
         <a class="store" href="https://apps.apple.com/account/subscriptions" target="_blank" rel="noopener">
@@ -602,10 +604,11 @@ dialog.sheet::backdrop { background: var(--scrim); }
         <a href="https://www.paypal.com/myaccount/autopay/" target="_blank" rel="noopener">PayPal automatic payments ↗</a>
         <a href="https://www.amazon.com/yourmembershipsandsubscriptions" target="_blank" rel="noopener">Amazon memberships ↗</a>
       </div>
-      <p class="fine">On iPhone you can also open Settings, tap your name, then Subscriptions. Add anything you find with the Add button so it counts toward your total.</p>
+      <p class="fine">On iPhone you can also open Settings, tap your name, then Subscriptions. Report anything you find with the Report button so it counts toward your total.</p>
     </section>
 
     <section class="panel" aria-labelledby="f2">
+      <span class="panel-k" aria-hidden="true">調査 · 二</span>
       <h2 id="f2">Scan a bank statement</h2>
       <p class="lede">Download a statement from your bank's app or website, or take screenshots of your recent transactions. The scan picks out known services and charges that repeat.</p>
       <label class="file-btn" for="st-file">
@@ -630,8 +633,9 @@ dialog.sheet::backdrop { background: var(--scrim); }
     </section>
 
     <section class="panel" aria-labelledby="f3">
-      <h2 id="f3">Popular services</h2>
-      <p class="lede">Tap Add next to anything you pay for. Prices are typical US prices; change them to what you pay.</p>
+      <span class="panel-k" aria-hidden="true">調査 · 三</span>
+      <h2 id="f3">Known Infernals</h2>
+      <p class="lede">Popular subscriptions. Tap Add next to anything you pay for. Prices are typical US prices; change them to what you pay.</p>
       <input type="search" id="dir-search" placeholder="Search services" autocomplete="off">
       <ul class="ledger dir" id="dir-list"></ul>
       <button class="btn-quiet" type="button" id="dir-more" data-act="dir-more">Show all</button>
@@ -643,11 +647,11 @@ dialog.sheet::backdrop { background: var(--scrim); }
   <div class="wrap" role="tablist">
     <button class="tab" role="tab" type="button" id="tab-mine" data-tab="mine" aria-selected="true" aria-controls="view-mine">
       <svg viewBox="0 0 22 22" aria-hidden="true"><rect x="3" y="3" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 8h8M7 11h8M7 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <span>My list <span class="badge" id="tab-count"></span></span>
+      <span>Fire log <span class="badge" id="tab-count"></span></span>
     </button>
     <button class="tab" role="tab" type="button" id="tab-find" data-tab="find" aria-selected="false" aria-controls="view-find">
       <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="9.5" cy="9.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13.5 13.5L18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <span>Find subscriptions</span>
+      <span>Investigate</span>
     </button>
   </div>
 </nav>
@@ -944,15 +948,15 @@ function subRowHTML(s) {
   const cyc = CYCLES[s.cycle] || CYCLES.monthly;
   const chips = [];
   if (s.example) chips.push('<span class="chip ex">Example</span>');
-  if (s.status === 'active' && nr && (nr - today()) / DAY <= 3) chips.push(`<span class="chip soon">Renews ${esc(relDay(nr))}</span>`);
+  if (s.status === 'active' && nr && (nr - today()) / DAY <= 3) chips.push(`<span class="chip soon">Flares up ${esc(relDay(nr))}</span>`);
   const metaDate = s.status === 'cancelled'
-    ? `Cancelled ${s.cancelledOn ? esc(dayFmt.format(fromISO(s.cancelledOn))) : ''}`
+    ? `Extinguished ${s.cancelledOn ? esc(dayFmt.format(fromISO(s.cancelledOn))) : ''}`
     : (nr ? `Renews ${esc(dayFmt.format(nr))}${(nr - today()) / DAY > 3 && (nr - today()) / DAY < 7 ? ' · ' + esc(relDay(nr)) : ''}` : 'Renewal date not set');
   const via = s.via && s.via !== 'direct' ? `Billed by ${esc(BILLERS[s.via]?.label || s.via)}` : '';
   const actions = s.status === 'cancelled'
-    ? `<button class="btn-quiet" type="button" data-act="restore" data-id="${esc(s.id)}">Restore</button>
+    ? `<button class="btn-quiet" type="button" data-act="restore" data-id="${esc(s.id)}">Reignite</button>
        <button class="btn-quiet" type="button" data-act="edit" data-id="${esc(s.id)}">Edit</button>`
-    : `<button class="btn-cut" type="button" data-act="cancel" data-id="${esc(s.id)}">Cancel it</button>
+    : `<button class="btn-cut" type="button" data-act="cancel" data-id="${esc(s.id)}">Extinguish</button>
        <button class="btn-quiet" type="button" data-act="edit" data-id="${esc(s.id)}">Edit</button>`;
   return `<li class="row${s.status === 'cancelled' ? ' is-cancelled' : ''}">
     ${tileHTML(s.name)}
@@ -960,9 +964,9 @@ function subRowHTML(s) {
       <div><span class="row-name">${esc(s.name)}</span> ${chips.length ? `<span class="chips">${chips.join('')}</span>` : ''}</div>
       <div class="row-meta mono">${metaDate}</div>
       ${via ? `<div class="row-meta">${via}</div>` : ''}
-      <div class="row-actions">${actions}</div>
     </div>
     <div class="row-amt mono">${esc(fmt(s.price))}<small>${esc(cyc.short)}</small></div>
+    <div class="row-actions">${actions}</div>
   </li>`;
 }
 
@@ -972,7 +976,7 @@ function render() {
   const monthly = active.reduce((a, s) => a + perMonth(s), 0);
   const now = today();
 
-  $('#h-eyebrow').textContent = 'Statement · ' + new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(now);
+  $('#h-eyebrow').textContent = 'Fire load · ' + new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(now);
   $('#h-month').textContent = fmt(monthly);
   $('#h-year').textContent = fmt(monthly * 12) + ' a year';
   $('#h-count').textContent = active.length === 1 ? '1 subscription' : `${active.length} subscriptions`;
@@ -980,13 +984,13 @@ function render() {
   const upcoming = active.map(s => ({ s, d: nextRenewal(s) })).filter(x => x.d).sort((a, b) => a.d - b.d);
   const nx = upcoming[0];
   $('#h-next').innerHTML = nx
-    ? `Next charge: <strong>${esc(nx.s.name)}</strong> · <span class="mono">${esc(fmt(nx.s.price))}</span> · ${esc(relDay(nx.d))}`
+    ? `Next flare-up: <strong>${esc(nx.s.name)}</strong> · <span class="mono">${esc(fmt(nx.s.price))}</span> · ${esc(relDay(nx.d))}`
     : (active.length ? 'Add renewal dates to see what is due next.' : 'Add your subscriptions to see what is due next.');
 
   const saved = cancelled.reduce((a, s) => a + perMonth(s), 0) * 12;
   const savedEl = $('#h-saved');
   savedEl.hidden = !cancelled.length;
-  if (cancelled.length) savedEl.textContent = `You're saving ${fmt(saved)} a year by cancelling ${cancelled.length === 1 ? '1 subscription' : cancelled.length + ' subscriptions'}.`;
+  if (cancelled.length) savedEl.textContent = `${cancelled.length === 1 ? '1 subscription' : cancelled.length + ' subscriptions'} extinguished. You're saving ${fmt(saved)} a year.`;
 
   const ex = state.subs.filter(s => s.example);
   $('#ex-banner').hidden = !ex.length;
@@ -1035,9 +1039,9 @@ function renderDir() {
     return `<li class="row">
       ${tileHTML(s.name)}
       <div class="row-main"><span class="row-name">${esc(s.name)}</span><span class="row-meta">${esc(s.cat)}${price}</span></div>
-      ${have ? '<span class="chip done">In your list</span>' : `<button class="btn-secondary" type="button" data-act="dir-add" data-svc="${esc(s.id)}">Add</button>`}
+      ${have ? '<span class="chip done">On your log</span>' : `<button class="btn-secondary" type="button" data-act="dir-add" data-svc="${esc(s.id)}">Add</button>`}
     </li>`;
-  }).join('') || `<li class="row"><span></span><div class="row-main"><span class="row-meta">No match. Use the Add button at the top to add it by hand.</span></div><span></span></li>`;
+  }).join('') || `<li class="row"><span></span><div class="row-main"><span class="row-meta">No match. Use the Report button at the top to add it by hand.</span></div><span></span></li>`;
   const more = $('#dir-more');
   more.hidden = !!q || state.dirAll || items.length <= 12;
   more.textContent = `Show all ${items.length}`;
@@ -1097,8 +1101,8 @@ function openCancel(id) {
   const search = 'https://www.google.com/search?q=' + encodeURIComponent(`how to cancel ${s.name} subscription`);
   const yearly = perMonth(s) * 12;
   openSheet(`
-    <div class="sheet-head"><h2 id="sheet-title">Cancel ${esc(s.name)}</h2>${closeBtn}</div>
-    <p style="margin:0">Cancelling saves you <strong class="mono">${esc(fmt(yearly))}</strong> a year.${s.example ? ' <span class="chip ex">Example</span>' : ''}</p>
+    <div class="sheet-head"><h2 id="sheet-title">Extinguish ${esc(s.name)}</h2>${closeBtn}</div>
+    <p style="margin:0">Putting this one out saves you <strong class="mono">${esc(fmt(yearly))}</strong> a year.${s.example ? ' <span class="chip ex">Example</span>' : ''}</p>
     ${p.note ? `<div class="note">${esc(p.note)}</div>` : ''}
     <ol class="steps">
       <li><div>
@@ -1109,7 +1113,7 @@ function openCancel(id) {
       </div></li>
       <li><div><strong>Confirm on their site</strong><span class="fine">They will ask you to sign in and may offer a discount to stay. Keep going until you see a confirmation, or an email that says it's cancelled.</span></div></li>
       <li><div><strong>Come back and mark it</strong>
-        <button class="btn-ok btn-block" type="button" data-act="mark-cancelled" data-id="${esc(s.id)}">I cancelled it</button>
+        <button class="btn-ok btn-block" type="button" data-act="mark-cancelled" data-id="${esc(s.id)}">I cancelled it · Latom</button>
       </div></li>
     </ol>
     <p class="fine">Still getting charged after you cancel? Your bank or card app can usually block a merchant or send you a new card number.</p>
@@ -1132,7 +1136,7 @@ function openForm(opts = {}) {
     notes: pre.notes || '',
   };
   openSheet(`
-    <div class="sheet-head"><h2 id="sheet-title">${s ? 'Edit ' + esc(s.name) : 'Add a subscription'}</h2>${closeBtn}</div>
+    <div class="sheet-head"><h2 id="sheet-title">${s ? 'Edit ' + esc(s.name) : 'Report a subscription'}</h2>${closeBtn}</div>
     <form id="sub-form" novalidate style="display:grid;gap:14px">
       <div class="field">
         <label for="f-name">Name</label>
@@ -1152,11 +1156,11 @@ function openForm(opts = {}) {
       <div class="field"><label for="f-url">Cancel link (optional)</label><input type="url" id="f-url" inputmode="url" value="${esc(val.cancelUrl)}" placeholder="https://"></div>
       <div class="field"><label for="f-notes">Notes (optional)</label><input type="text" id="f-notes" value="${esc(val.notes)}" placeholder="Shared with family, free trial ends…"></div>
       <p class="err-text" id="f-err" role="alert"></p>
-      <button class="btn-primary btn-block" type="submit">${s ? 'Save changes' : 'Add to my list'}</button>
+      <button class="btn-primary btn-block" type="submit">${s ? 'Save changes' : 'Add to fire log'}</button>
       ${s ? `<div class="btn-row">
         ${s.status === 'cancelled'
-          ? `<button class="btn-quiet" type="button" data-act="restore" data-id="${esc(s.id)}">Move back to active</button>`
-          : `<button class="btn-quiet" type="button" data-act="cancel" data-id="${esc(s.id)}">Cancel it</button>`}
+          ? `<button class="btn-quiet" type="button" data-act="restore" data-id="${esc(s.id)}">Reignite</button>`
+          : `<button class="btn-quiet" type="button" data-act="cancel" data-id="${esc(s.id)}">Extinguish</button>`}
         <button class="btn-cut" type="button" id="f-del">Delete</button>
       </div>` : ''}
     </form>
@@ -1198,7 +1202,7 @@ function openForm(opts = {}) {
       };
       closeSheet();
       await putSub(sub);
-      toast(s ? 'Saved' : `Added ${name}`);
+      toast(s ? 'Saved' : `${name} added to the fire log`);
     });
     const del = $('#f-del', body);
     if (del) {
@@ -1496,16 +1500,16 @@ function renderCandidates(heading) {
       <span class="row-main">
         <span class="row-name">${esc(c.name)}</span>
         <span class="row-meta mono">${esc(c.descriptor || '')}</span>
-        <span class="row-meta">${dupe ? 'Already in your list' : esc(why + last)}${c.via && c.via !== 'direct' ? ' · billed by ' + esc(BILLERS[c.via].label) : ''}</span>
+        <span class="row-meta">${dupe ? 'Already on your log' : esc(why + last)}${c.via && c.via !== 'direct' ? ' · billed by ' + esc(BILLERS[c.via].label) : ''}</span>
       </span>
       <span class="row-amt mono">${esc(fmt(c.price))}<small>${esc(CYCLES[c.cycle].short)}</small></span>
     </label></li>`;
   }).join('');
   const n = state.candidates.filter((c, i) => c.checked !== false && !inList(c.name, c.serviceId, c.price)).length;
   box.innerHTML = `<div class="results">
-    <h3>${esc(heading || box.dataset.heading || `Found ${state.candidates.length} possible subscription${state.candidates.length === 1 ? '' : 's'}`)}</h3>
+    <h3>${esc(heading || box.dataset.heading || `Spotted ${state.candidates.length} possible subscription${state.candidates.length === 1 ? '' : 's'}`)}</h3>
     <ul class="ledger">${items}</ul>
-    <button class="btn-primary btn-block" type="button" data-act="add-cands" ${n ? '' : 'disabled'}>${n ? `Add ${n} to my list` : 'Nothing new to add'}</button>
+    <button class="btn-primary btn-block" type="button" data-act="add-cands" ${n ? '' : 'disabled'}>${n ? `Add ${n} to fire log` : 'Nothing new to add'}</button>
     <p class="fine">Untick anything that isn't a subscription. You can edit prices and dates after adding.</p>
   </div>`;
   if (heading) box.dataset.heading = heading;
@@ -1535,7 +1539,7 @@ function scanLocal() {
   } else {
     status.textContent = `Read ${txs.length} transactions.${hasImages ? ' Screenshots were skipped; ask Claude to read those.' : ''}`;
   }
-  renderCandidates(found.length ? `Found ${found.length} possible subscription${found.length === 1 ? '' : 's'}` : '');
+  renderCandidates(found.length ? `Spotted ${found.length} possible subscription${found.length === 1 ? '' : 's'}` : '');
 }
 
 /* ---------- Claude reading (optional) ---------- */
@@ -1649,13 +1653,13 @@ document.addEventListener('click', async e => {
     case 'mark-cancelled': {
       const s = state.subs.find(x => x.id === id);
       closeSheet();
-      if (s) { await putSub({ ...s, status: 'cancelled', cancelledOn: toISO(today()) }); toast(`${s.name} marked as cancelled`); }
+      if (s) { await putSub({ ...s, status: 'cancelled', cancelledOn: toISO(today()) }); toast(`${s.name} extinguished. Latom.`); }
       break;
     }
     case 'restore': {
       const s = state.subs.find(x => x.id === id);
       closeSheet();
-      if (s) { await putSub({ ...s, status: 'active', cancelledOn: '' }); toast(`${s.name} is back in your active list`); }
+      if (s) { await putSub({ ...s, status: 'active', cancelledOn: '' }); toast(`${s.name} reignited and back on your log`); }
       break;
     }
     case 'clear-examples': {
@@ -1684,7 +1688,7 @@ document.addEventListener('click', async e => {
       for (const c of pick) {
         await putSub({ id: newId(), name: c.name, serviceId: c.serviceId, price: c.price, cycle: c.cycle, nextDate: c.nextDate, via: c.via, notes: c.descriptor ? `Shows on statement as ${c.descriptor}` : '', status: 'active' });
       }
-      toast(`Added ${pick.length} to your list`);
+      toast(`Added ${pick.length} to the fire log`);
       renderCandidates();
       break;
     }
@@ -1703,9 +1707,64 @@ $('#set-cur').addEventListener('change', e => { state.prefs.currency = e.target.
 
 document.getElementById('dir-names').innerHTML = DIRECTORY.filter(s => s.id !== 'apple-subs').map(s => `<option value="${esc(s.name)}"></option>`).join('');
 
+/* ---------- embers rising behind the fire load ---------- */
+function embers() {
+  const cv = document.getElementById('embers');
+  if (!cv || !cv.getContext) return;
+  const ctx = cv.getContext('2d');
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let w = 0, h = 0;
+  const parts = [];
+  function size() {
+    const r = cv.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    w = r.width; h = r.height;
+    cv.width = Math.max(1, w * dpr); cv.height = Math.max(1, h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function spawn(p, anywhere) {
+    p.x = Math.random() * w;
+    p.y = anywhere ? Math.random() * h : h + 4;
+    p.r = 0.7 + Math.random() * 1.9;
+    p.vy = 0.25 + Math.random() * 0.65;
+    p.vx = (Math.random() - 0.5) * 0.25;
+    p.t = Math.random() * 100;
+    p.hue = 14 + Math.random() * 30;
+  }
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    for (const p of parts) {
+      const a = Math.max(0, Math.min(1, p.y / h));
+      ctx.beginPath();
+      ctx.fillStyle = `hsla(${p.hue}, 100%, 60%, ${0.12 + 0.7 * a})`;
+      ctx.shadowColor = `hsla(${p.hue}, 100%, 55%, .9)`;
+      ctx.shadowBlur = 8;
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  function step() {
+    if (!document.hidden && w) {
+      for (const p of parts) {
+        p.t += 1;
+        p.y -= p.vy;
+        p.x += p.vx + Math.sin(p.t / 22) * 0.18;
+        if (p.y < -6) spawn(p, false);
+      }
+      draw();
+    }
+    requestAnimationFrame(step);
+  }
+  size();
+  for (let i = 0; i < 28; i++) { const p = {}; spawn(p, true); parts.push(p); }
+  window.addEventListener('resize', () => { size(); draw(); });
+  if (reduce) draw(); else requestAnimationFrame(step);
+}
+
 /* ---------- boot ---------- */
 render();
 setTab(state.tab);
+embers();
 connectStore();
 connectSample();
 
